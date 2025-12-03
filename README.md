@@ -1,6 +1,6 @@
 <div align="center">
 
-## SharpAIKit: A Unified AI/LLM Toolkit for .NET
+## SharpAIKit: A Unified Agentic AI Framework for .NET
 <img src="imgs/logo.jpg" alt="SharpAIKit Logo" width="900">
 
 [![.NET Version](https://img.shields.io/badge/.NET-8.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
