@@ -1,6 +1,6 @@
 <div align="center">
 
-## SharpAIKit: A Unified Agentic AI Framework for .NET
+## SharpAIKit: A Unified AI/LLM Toolkit for .NET
 <img src="imgs/logo.jpg" alt="SharpAIKit Logo" width="900">
 
 [![.NET Version](https://img.shields.io/badge/.NET-8.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
@@ -74,7 +74,7 @@ dotnet add package SharpAIKit
 
 ---
 
-<div >
+<div>
 
 **⭐ Star this project if it helps you!**
 
@@ -183,3 +183,17 @@ Console.WriteLine($"Best score: {result.BestScore:F2}");
 See [中文文档](README_CN.md) or [English Documentation](README_EN.md) for detailed examples.
 
 </div>
+
+---
+
+## 👥 Core Authors
+
+1. **Dustin Dong**
+   - Role: Creator & Lead Developer
+   - GitHub: https://github.com/dxpython
+   - Description: Sole creator of the SharpAIKit framework, responsible for architecture, core modules, RAG engine, agent system, DSPy-style optimizer, multimodal support, and overall ecosystem design.
+
+2. **Evelyn-Liux**  
+   - Role: Co-developer  
+   - GitHub: https://github.com/Evelyn-Liux  
+   - Description: Core collaborator contributing to framework refinement, architectural discussions, and ecosystem development. Recognized as an  co-developer of the SharpAIKit project.
