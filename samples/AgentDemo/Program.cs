@@ -4,7 +4,7 @@ using SharpAIKit.LLM;
 Console.WriteLine("=== SharpAIKit Agent Demo (DeepSeek) ===\n");
 
 // Use DeepSeek API
-var client = LLMClientFactory.CreateDeepSeek("YOUR_API_KEY");
+var client = LLMClientFactory.CreateDeepSeek("sk-e164311ef7914e46a5d760c505714b94");
 
 // Create AI Agent
 var agent = new AiAgent(client);

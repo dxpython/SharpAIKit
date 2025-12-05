@@ -12,7 +12,7 @@ Console.WriteLine("🚀 SharpAIKit Advanced Features Demo (DeepSeek)\n");
 Console.WriteLine("=".PadRight(50, '='));
 
 // Using DeepSeek API
-var client = LLMClientFactory.CreateDeepSeek("YOUR_API_KEY");
+var client = LLMClientFactory.CreateDeepSeek("sk-e164311ef7914e46a5d760c505714b94");
 
 // ============================================================
 // 1. Chain Module - LCEL Style Composition

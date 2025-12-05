@@ -38,6 +38,7 @@ public class CalculatorToolTests
 
         // Assert
         Assert.Contains("error", result.ToLower());
+        
     }
 
     [Fact]

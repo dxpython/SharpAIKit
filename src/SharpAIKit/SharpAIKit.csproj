@@ -4,14 +4,28 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    
+    <!-- NuGet Package Metadata -->
     <PackageId>SharpAIKit</PackageId>
-    <Version>1.0.0</Version>
-    <Authors>SharpAIKit Contributors</Authors>
-    <Description>A unified AI/LLM toolkit supporting OpenAI, Ollama, LM Studio with built-in RAG engine and AI Agent</Description>
-    <PackageTags>AI;LLM;OpenAI;Ollama;RAG;Agent;ChatGPT</PackageTags>
-    <RepositoryUrl>https://github.com/yourusername/SharpAIKit</RepositoryUrl>
+    <Version>0.1.0</Version>
+    <Authors>Dustin Dong</Authors>
+    <Company>SharpAIKit</Company>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/dxpython/SharpAIKit</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/dxpython/SharpAIKit.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Description>A unified .NET large-model application and agentic AI development framework.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>AI;LLM;Agent;RAG;DSPy;.NET</PackageTags>
+    
+    <!-- Package Generation Settings -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    
+    <!-- Documentation -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,5 +38,8 @@
     <PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="4.8.0" />
   </ItemGroup>
 
-</Project>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
+</Project>

@@ -4,7 +4,7 @@ using SharpAIKit.RAG;
 Console.WriteLine("=== SharpAIKit RAG Demo (DeepSeek) ===\n");
 
 // Use DeepSeek API
-var client = LLMClientFactory.CreateDeepSeek("YOUR_API_KEY");
+var client = LLMClientFactory.CreateDeepSeek("sk-e164311ef7914e46a5d760c505714b94");
 
 // Create RAG Engine
 var rag = new RagEngine(client);
@@ -13,6 +13,7 @@ try
 {
     // Example 1: Index Content Directly
     Console.WriteLine("[Example 1: Index Content]");
+    Console.WriteLine("Indexing content...");
 
     var sampleContent = """
         Bone and Joint Infection Treatment Guidelines
