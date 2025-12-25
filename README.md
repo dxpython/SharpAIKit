@@ -17,6 +17,7 @@
 - 🕸️ **SharpGraph** - Graph orchestration with loops and complex branches
 - 🧬 **DSPy Optimizer** - Auto-optimize prompts, gets smarter over time
 
+Package download: https://www.nuget.org/packages/SharpAIKit/
 <br/>
 
 ---
