@@ -35,6 +35,17 @@
 | **Performance** | ✅ **Native compilation** | ❌ Interpreted |
 | **Code Simplicity** | ✅ **Minimal API** | ❌ Heavy abstractions |
 | **Dependencies** | ✅ **Minimal** | ❌ Many dependencies |
+| **Strong Typed Context** | ✅ **StrongContext** | ❌ Dictionary passing |
+| **Modular Architecture** | ✅ **IPlanner/IToolExecutor** | ⚠️ Partially modular |
+| **Middleware System** | ✅ **Full support** | ❌ No unified mechanism |
+| **State Persistence** | ✅ **Built-in** | ⚠️ Manual implementation |
+| **Parallel Execution** | ✅ **Fork/Join** | ⚠️ LangGraph support |
+| **Event System** | ✅ **Lifecycle hooks** | ❌ None |
+| **OpenAPI Tools** | ✅ **Auto-generation** | ❌ None |
+| **OpenTelemetry** | ✅ **Built-in** | ⚠️ Manual integration |
+| **Structured Logging** | ✅ **Built-in** | ⚠️ Manual implementation |
+| **Fluent API** | ✅ **Chain building** | ⚠️ Partial support |
+| **Pre-built Templates** | ✅ **ReAct/MapReduce/Reflection** | ⚠️ Limited |
 
 ---
 
@@ -55,6 +66,7 @@
 - [🔮 Native C# Code Interpreter](#-native-c-code-interpreter) ⭐ **Killer Feature**
 - [🕸️ SharpGraph](#️-sharpgraph) ⭐ **Killer Feature**
 - [🧬 DSPy-style Optimizer](#-dspy-style-optimizer) ⭐ **Killer Feature**
+- [🏗️ Architecture Improvements](#️-architecture-improvements) ⭐ **Enterprise Features**
 - [Supported Providers](#-supported-providers)
 
 ---
@@ -75,6 +87,17 @@
 | 🔮 **Code Interpreter** | Code Execution | **Native C# code execution**, no Python, based on Roslyn |
 | 🕸️ **SharpGraph** | Graph Orchestration | **Finite State Machine**, supports loops and complex branches |
 | 🧬 **DSPy Optimizer** | Auto Optimization | **Automatic prompt optimization**, gets smarter over time |
+| 🏗️ **StrongContext** | Strong Typed Context | **Type-safe data passing**, compile-time checking |
+| 🔧 **Modular Architecture** | Interface Separation | **IPlanner/IToolExecutor/IMemory**, clear responsibilities |
+| 🔌 **Middleware System** | LLM Middleware | **Retry/RateLimit/Logging/CircuitBreaker**, unified mechanism |
+| 💾 **State Persistence** | Checkpoint Support | **Memory/File storage**, task recovery support |
+| ⚡ **Parallel Execution** | Fork/Join | **Multi-branch parallel**, performance boost |
+| 📡 **Event System** | Lifecycle Hooks | **OnNodeStart/End/Error**, full tracing |
+| 🔗 **OpenAPI Tools** | Auto Generation | **Generate tool definitions from Swagger** |
+| 📊 **OpenTelemetry** | Distributed Tracing | **Built-in support**, Jaeger/Aspire visualization |
+| 📝 **Structured Logging** | Logging | **Structured attributes**, easy debugging |
+| 🎨 **Fluent API** | Chain Building | **Elegant API**, better DX |
+| 📦 **Pre-built Templates** | Out-of-box | **ReAct/MapReduce/Reflection** patterns |
 
 ---
 
@@ -670,6 +693,236 @@ optimizer.SetMetric(Metrics.Custom(async (input, output, expected) =>
     if (output.Contains("programming language")) score += 0.2;
     return score;
 }));
+```
+
+---
+
+## 🏗️ Architecture Improvements
+
+SharpAIKit v0.1.0 introduces comprehensive architecture improvements, designed to surpass LangChain and fully leverage the .NET ecosystem.
+
+### 🔷 1. Strong Typed Context (StrongContext)
+
+**Problem**: Previously used `Dictionary<string, object?>` for data passing, type-unsafe and hard to maintain.
+
+**Solution**: Introduced strongly-typed `StrongContext` object:
+
+```csharp
+using SharpAIKit.Common;
+
+var context = new StrongContext();
+context.Set("user_id", 12345);
+context.Set<UserProfile>(profile);
+
+// Type-safe access
+var userId = context.Get<int>("user_id");
+var profile = context.Get<UserProfile>();
+
+// Serialization support
+var json = context.ToJson();
+var restored = StrongContext.FromJson(json);
+```
+
+**Advantages**:
+- ✅ Compile-time type checking
+- ✅ IntelliSense support
+- ✅ Backward compatible dictionary access
+- ✅ Serialization/deserialization support
+
+### 🔷 2. Modular Architecture
+
+**Problem**: `AiAgent` integrated planning, execution, and parsing responsibilities, high coupling.
+
+**Solution**: Split into independent interfaces:
+
+```csharp
+using SharpAIKit.Agent;
+
+// Planner: Generate execution plans
+var planner = new SimplePlanner(llmClient);
+var plan = await planner.PlanAsync("Complete data analysis task", context);
+
+// Tool Executor: Execute tool calls
+var executor = new DefaultToolExecutor();
+executor.RegisterTool(myTool);
+var result = await executor.ExecuteAsync("tool_name", args, context);
+
+// Enhanced Agent: Combines all components
+var agent = new EnhancedAgent(llmClient, planner, executor, memory);
+var agentResult = await agent.RunAsync("Complex task");
+```
+
+**Advantages**:
+- ✅ Clear responsibilities, easy to test
+- ✅ Replaceable components
+- ✅ Dependency injection support
+
+### 🔷 3. LLM Middleware System
+
+**Problem**: LLM calls lacked unified middleware mechanism.
+
+**Solution**: Implemented complete middleware system:
+
+```csharp
+using SharpAIKit.LLM;
+
+// Retry middleware
+var retryMiddleware = new RetryMiddleware(maxRetries: 3, delay: TimeSpan.FromSeconds(1));
+
+// Rate limit middleware
+var rateLimitMiddleware = new RateLimitMiddleware(maxRequests: 10, TimeSpan.FromMinutes(1));
+
+// Logging middleware
+var loggingMiddleware = new LoggingMiddleware(logger);
+
+// Circuit breaker middleware
+var circuitBreaker = new CircuitBreakerMiddleware(failureThreshold: 5);
+```
+
+**Advantages**:
+- ✅ Unified retry, rate limit, logging mechanism
+- ✅ Circuit breaker prevents cascading failures
+- ✅ Easy to extend
+
+### 🔷 4. Graph Engine Enhancements
+
+#### State Persistence
+
+```csharp
+using SharpAIKit.Graph;
+
+var store = new FileGraphStateStore("./checkpoints");
+var graph = new EnhancedSharpGraph("start");
+graph.StateStore = store;
+graph.AutoSaveCheckpoints = true;
+
+// Auto-save during execution
+var state = await graph.ExecuteAsync(initialState);
+
+// Restore from checkpoint
+var checkpoint = await store.LoadCheckpointAsync(checkpointId);
+var restoredState = await graph.RestoreFromCheckpointAsync(checkpointId, store);
+```
+
+#### Parallel Execution
+
+```csharp
+var builder = new EnhancedSharpGraphBuilder("start");
+builder
+    .Fork("split", "branch1", "branch2", "branch3")
+    .Join("merge", JoinStrategy.All, states => {
+        // Merge results from all branches
+        return MergeResults(states);
+    });
+```
+
+#### Event System
+
+```csharp
+var graph = new EnhancedSharpGraph("start");
+graph.OnNodeStart += async (sender, e) => {
+    Console.WriteLine($"Node {e.NodeName} started");
+};
+graph.OnNodeEnd += async (sender, e) => {
+    Console.WriteLine($"Node {e.NodeName} completed in {e.ExecutionTime}");
+};
+graph.OnStreaming += async (sender, chunk) => {
+    Console.Write(chunk);
+};
+```
+
+### 🔷 5. OpenAPI Tool Generation
+
+Auto-generate tool definitions from Swagger/OpenAPI specs:
+
+```csharp
+using SharpAIKit.Agent;
+
+// Load from URL
+var tools = await OpenAPIToolGenerator.GenerateFromUrlAsync("https://api.example.com/swagger.json");
+
+// Generate from JSON string
+var tools = OpenAPIToolGenerator.GenerateFromOpenAPI(swaggerJson);
+
+// Register to executor
+foreach (var tool in tools)
+{
+    executor.RegisterTool(tool);
+}
+```
+
+### 🔷 6. OpenTelemetry Integration
+
+Distributed tracing support:
+
+```csharp
+using SharpAIKit.Observability;
+
+// LLM operation tracing
+using var activity = OpenTelemetrySupport.StartLLMActivity("Chat", model);
+activity?.SetTag("llm.provider", "DeepSeek");
+var response = await client.ChatAsync("Hello");
+
+// Tool execution tracing
+using var toolActivity = OpenTelemetrySupport.StartToolActivity("calculator");
+// ... execute tool ...
+
+// Graph node tracing
+using var nodeActivity = OpenTelemetrySupport.StartGraphNodeActivity("process");
+// ... execute node ...
+```
+
+### 🔷 7. Structured Logging
+
+```csharp
+using SharpAIKit.Observability;
+
+var logger = new StructuredLogger(loggerFactory.CreateLogger<MyClass>());
+
+// Log LLM request
+logger.LogLLMRequest(model, messages, response, duration);
+
+// Log tool execution
+logger.LogToolExecution(toolName, arguments, result, success: true);
+
+// Log graph node execution
+logger.LogGraphNode(nodeName, duration, success: true);
+```
+
+### 🔷 8. Fluent API
+
+Elegant chain-style building:
+
+```csharp
+using SharpAIKit.Graph;
+
+var graph = FluentGraphExtensions
+    .StartGraph("start")
+    .Do(async state => {
+        // Execute operation
+        return state;
+    })
+    .Next("process")
+    .If(state => state.Get<bool>("condition"), "true_path", "false_path")
+    .End()
+    .Build();
+```
+
+### 🔷 9. Pre-built Templates
+
+Out-of-box graph patterns:
+
+```csharp
+using SharpAIKit.Graph;
+
+// ReAct pattern
+var reactGraph = GraphTemplates.CreateReActPattern(llmClient, tools);
+
+// MapReduce pattern
+var mapReduceGraph = GraphTemplates.CreateMapReducePattern(llmClient, documents);
+
+// Reflection pattern (self-correcting)
+var reflectionGraph = GraphTemplates.CreateReflectionPattern(llmClient);
 ```
 
 ---

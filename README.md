@@ -16,6 +16,7 @@
 - 🔮 **Native C# Code Interpreter** - Execute C# code directly, no Python needed
 - 🕸️ **SharpGraph** - Graph orchestration with loops and complex branches
 - 🧬 **DSPy Optimizer** - Auto-optimize prompts, gets smarter over time
+- 🏗️ **Architecture Improvements** - StrongContext, Modular Architecture, Middleware System, State Persistence, Parallel Execution, Event System, OpenAPI Tools, OpenTelemetry, Structured Logging, Fluent API, Pre-built Templates
 
 Package download: https://www.nuget.org/packages/SharpAIKit/
 <br/>
@@ -182,6 +183,24 @@ Console.WriteLine($"Best score: {result.BestScore:F2}");
 ```
 
 See [中文文档](README_CN.md) or [English Documentation](README_EN.md) for detailed examples.
+
+## 🏗️ Architecture Improvements
+
+SharpAIKit v0.1.0 introduces comprehensive architecture improvements:
+
+- **StrongContext**: Type-safe data passing with compile-time checking
+- **Modular Architecture**: IPlanner, IToolExecutor, IMemory interfaces
+- **Middleware System**: Retry, RateLimit, Logging, CircuitBreaker
+- **State Persistence**: Checkpoint support for task recovery
+- **Parallel Execution**: Fork/Join nodes for multi-branch execution
+- **Event System**: Lifecycle hooks (OnNodeStart/End/Error)
+- **OpenAPI Tools**: Auto-generate tool definitions from Swagger
+- **OpenTelemetry**: Built-in distributed tracing support
+- **Structured Logging**: Structured attributes for easy debugging
+- **Fluent API**: Elegant chain-style graph building
+- **Pre-built Templates**: ReAct, MapReduce, Reflection patterns
+
+See [Architecture Improvements Documentation](docs/ARCHITECTURE_IMPROVEMENTS.md) for details.
 
 </div>
 

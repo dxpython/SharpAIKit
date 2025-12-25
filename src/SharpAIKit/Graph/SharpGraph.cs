@@ -46,6 +46,21 @@ public class GraphState
         Data[key] = value;
         return this;
     }
+
+    /// <summary>
+    /// Creates a copy of this state.
+    /// </summary>
+    public GraphState Clone()
+    {
+        return new GraphState
+        {
+            CurrentNode = CurrentNode,
+            NextNode = NextNode,
+            ShouldEnd = ShouldEnd,
+            Output = Output,
+            Data = new Dictionary<string, object?>(Data)
+        };
+    }
 }
 
 /// <summary>

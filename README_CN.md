@@ -35,6 +35,17 @@
 | **性能** | ✅ **原生编译** | ❌ 解释执行 |
 | **代码简洁度** | ✅ **极简 API** | ❌ 抽象层层嵌套 |
 | **依赖** | ✅ **极少** | ❌ 大量依赖 |
+| **强类型上下文** | ✅ **StrongContext** | ❌ 字典传递 |
+| **模块化架构** | ✅ **IPlanner/IToolExecutor** | ⚠️ 部分模块化 |
+| **中间件系统** | ✅ **完整支持** | ❌ 无统一机制 |
+| **状态持久化** | ✅ **内置支持** | ⚠️ 需手动实现 |
+| **并行执行** | ✅ **Fork/Join** | ⚠️ LangGraph 支持 |
+| **事件系统** | ✅ **生命周期钩子** | ❌ 无 |
+| **OpenAPI 工具** | ✅ **自动生成** | ❌ 无 |
+| **OpenTelemetry** | ✅ **内置支持** | ⚠️ 需手动集成 |
+| **结构化日志** | ✅ **内置支持** | ⚠️ 需手动实现 |
+| **Fluent API** | ✅ **链式构建** | ⚠️ 部分支持 |
+| **预置模版** | ✅ **ReAct/MapReduce/Reflection** | ⚠️ 有限 |
 
 ---
 
@@ -55,6 +66,7 @@
 - [🔮 Native C# Code Interpreter](#-native-c-code-interpreter) ⭐ **杀手级功能**
 - [🕸️ SharpGraph 图编排](#️-sharpgraph-图编排) ⭐ **杀手级功能**
 - [🧬 DSPy-style Optimizer](#-dspy-style-optimizer) ⭐ **杀手级功能**
+- [🏗️ 架构改进](#️-架构改进) ⭐ **企业级特性**
 - [支持的提供商](#-支持的提供商)
 
 ---
@@ -75,6 +87,17 @@
 | 🔮 **Code Interpreter** | 代码解释器 | **原生 C# 代码执行**，无需 Python，基于 Roslyn |
 | 🕸️ **SharpGraph** | 图编排 | **有限状态机**，支持循环和复杂分支 |
 | 🧬 **DSPy Optimizer** | 自动优化 | **自动提示词优化**，越用越聪明 |
+| 🏗️ **StrongContext** | 强类型上下文 | **类型安全的数据传递**，编译时检查 |
+| 🔧 **模块化架构** | 接口分离 | **IPlanner/IToolExecutor/IMemory**，职责清晰 |
+| 🔌 **中间件系统** | LLM 中间件 | **重试/限流/日志/熔断**，统一机制 |
+| 💾 **状态持久化** | 检查点支持 | **内存/文件存储**，支持任务恢复 |
+| ⚡ **并行执行** | Fork/Join | **多分支并行**，提升性能 |
+| 📡 **事件系统** | 生命周期钩子 | **OnNodeStart/End/Error**，完整追踪 |
+| 🔗 **OpenAPI 工具** | 自动生成 | **从 Swagger 生成工具定义** |
+| 📊 **OpenTelemetry** | 分布式追踪 | **内置支持**，Jaeger/Aspire 可视化 |
+| 📝 **结构化日志** | 日志记录 | **结构化属性**，便于调试 |
+| 🎨 **Fluent API** | 链式构建 | **优雅的 API**，提升开发体验 |
+| 📦 **预置模版** | 开箱即用 | **ReAct/MapReduce/Reflection** 模式 |
 
 ---
 
@@ -812,6 +835,236 @@ var response = await client.ChatAsync(testPrompt);
 |:-----|:----:|:----:|:--------:|
 | 手动优化 | 数小时 | 不确定 | ❌ |
 | DSPy Optimizer | **几分钟** | **稳定提升** | ✅ |
+
+---
+
+## 🏗️ 架构改进
+
+SharpAIKit v0.1.0 引入了全面的架构改进，旨在超越 LangChain 并充分利用 .NET 生态系统的优势。
+
+### 🔷 1. 强类型上下文 (StrongContext)
+
+**问题**: 之前使用 `Dictionary<string, object?>` 传递数据，类型不安全且难以维护。
+
+**解决方案**: 引入强类型的 `StrongContext` 对象：
+
+```csharp
+using SharpAIKit.Common;
+
+var context = new StrongContext();
+context.Set("user_id", 12345);
+context.Set<UserProfile>(profile);
+
+// 类型安全访问
+var userId = context.Get<int>("user_id");
+var profile = context.Get<UserProfile>();
+
+// 序列化支持
+var json = context.ToJson();
+var restored = StrongContext.FromJson(json);
+```
+
+**优势**:
+- ✅ 编译时类型检查
+- ✅ IntelliSense 支持
+- ✅ 向后兼容字典访问
+- ✅ 支持序列化/反序列化
+
+### 🔷 2. 模块化架构
+
+**问题**: `AiAgent` 集成了规划、执行和解析等多个职责，耦合度高。
+
+**解决方案**: 拆分为独立的接口：
+
+```csharp
+using SharpAIKit.Agent;
+
+// 规划器：生成执行计划
+var planner = new SimplePlanner(llmClient);
+var plan = await planner.PlanAsync("完成数据分析任务", context);
+
+// 工具执行器：执行工具调用
+var executor = new DefaultToolExecutor();
+executor.RegisterTool(myTool);
+var result = await executor.ExecuteAsync("tool_name", args, context);
+
+// 增强型 Agent：组合所有组件
+var agent = new EnhancedAgent(llmClient, planner, executor, memory);
+var agentResult = await agent.RunAsync("复杂任务");
+```
+
+**优势**:
+- ✅ 职责清晰，易于测试
+- ✅ 可替换组件
+- ✅ 支持依赖注入
+
+### 🔷 3. LLM 中间件系统
+
+**问题**: LLM 调用缺乏统一的中间件机制。
+
+**解决方案**: 实现完整的中间件系统：
+
+```csharp
+using SharpAIKit.LLM;
+
+// 重试中间件
+var retryMiddleware = new RetryMiddleware(maxRetries: 3, delay: TimeSpan.FromSeconds(1));
+
+// 限流中间件
+var rateLimitMiddleware = new RateLimitMiddleware(maxRequests: 10, TimeSpan.FromMinutes(1));
+
+// 日志中间件
+var loggingMiddleware = new LoggingMiddleware(logger);
+
+// 熔断器中间件
+var circuitBreaker = new CircuitBreakerMiddleware(failureThreshold: 5);
+```
+
+**优势**:
+- ✅ 统一的重试、限流、日志机制
+- ✅ 熔断器防止级联故障
+- ✅ 易于扩展
+
+### 🔷 4. Graph 引擎增强
+
+#### 状态持久化
+
+```csharp
+using SharpAIKit.Graph;
+
+var store = new FileGraphStateStore("./checkpoints");
+var graph = new EnhancedSharpGraph("start");
+graph.StateStore = store;
+graph.AutoSaveCheckpoints = true;
+
+// 执行过程中自动保存
+var state = await graph.ExecuteAsync(initialState);
+
+// 从检查点恢复
+var checkpoint = await store.LoadCheckpointAsync(checkpointId);
+var restoredState = await graph.RestoreFromCheckpointAsync(checkpointId, store);
+```
+
+#### 并行执行
+
+```csharp
+var builder = new EnhancedSharpGraphBuilder("start");
+builder
+    .Fork("split", "branch1", "branch2", "branch3")
+    .Join("merge", JoinStrategy.All, states => {
+        // 合并所有分支的结果
+        return MergeResults(states);
+    });
+```
+
+#### 事件系统
+
+```csharp
+var graph = new EnhancedSharpGraph("start");
+graph.OnNodeStart += async (sender, e) => {
+    Console.WriteLine($"节点 {e.NodeName} 开始执行");
+};
+graph.OnNodeEnd += async (sender, e) => {
+    Console.WriteLine($"节点 {e.NodeName} 完成，耗时 {e.ExecutionTime}");
+};
+graph.OnStreaming += async (sender, chunk) => {
+    Console.Write(chunk);
+};
+```
+
+### 🔷 5. OpenAPI 工具生成
+
+从 Swagger/OpenAPI 规范自动生成工具定义：
+
+```csharp
+using SharpAIKit.Agent;
+
+// 从 URL 加载
+var tools = await OpenAPIToolGenerator.GenerateFromUrlAsync("https://api.example.com/swagger.json");
+
+// 从 JSON 字符串生成
+var tools = OpenAPIToolGenerator.GenerateFromOpenAPI(swaggerJson);
+
+// 注册到执行器
+foreach (var tool in tools)
+{
+    executor.RegisterTool(tool);
+}
+```
+
+### 🔷 6. OpenTelemetry 集成
+
+分布式追踪支持：
+
+```csharp
+using SharpAIKit.Observability;
+
+// LLM 操作追踪
+using var activity = OpenTelemetrySupport.StartLLMActivity("Chat", model);
+activity?.SetTag("llm.provider", "DeepSeek");
+var response = await client.ChatAsync("Hello");
+
+// 工具执行追踪
+using var toolActivity = OpenTelemetrySupport.StartToolActivity("calculator");
+// ... 执行工具 ...
+
+// 图节点追踪
+using var nodeActivity = OpenTelemetrySupport.StartGraphNodeActivity("process");
+// ... 执行节点 ...
+```
+
+### 🔷 7. 结构化日志
+
+```csharp
+using SharpAIKit.Observability;
+
+var logger = new StructuredLogger(loggerFactory.CreateLogger<MyClass>());
+
+// 记录 LLM 请求
+logger.LogLLMRequest(model, messages, response, duration);
+
+// 记录工具执行
+logger.LogToolExecution(toolName, arguments, result, success: true);
+
+// 记录图节点执行
+logger.LogGraphNode(nodeName, duration, success: true);
+```
+
+### 🔷 8. Fluent API
+
+优雅的链式构建：
+
+```csharp
+using SharpAIKit.Graph;
+
+var graph = FluentGraphExtensions
+    .StartGraph("start")
+    .Do(async state => {
+        // 执行操作
+        return state;
+    })
+    .Next("process")
+    .If(state => state.Get<bool>("condition"), "true_path", "false_path")
+    .End()
+    .Build();
+```
+
+### 🔷 9. 预置模版
+
+开箱即用的图模式：
+
+```csharp
+using SharpAIKit.Graph;
+
+// ReAct 模式
+var reactGraph = GraphTemplates.CreateReActPattern(llmClient, tools);
+
+// MapReduce 模式
+var mapReduceGraph = GraphTemplates.CreateMapReducePattern(llmClient, documents);
+
+// Reflection 模式（自我纠错）
+var reflectionGraph = GraphTemplates.CreateReflectionPattern(llmClient);
+```
 
 ---
 
