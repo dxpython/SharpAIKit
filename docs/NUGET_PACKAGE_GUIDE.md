@@ -3,7 +3,7 @@
 ## Package Information
 
 - **Package ID**: SharpAIKit
-- **Version**: 0.1.0
+- **Version**: 0.3.0
 - **Authors**: Dustin Dong
 - **Company**: SharpAIKit
 - **License**: MIT
