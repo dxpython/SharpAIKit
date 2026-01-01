@@ -2,6 +2,8 @@ using System.Text;
 using System.Text.Json;
 using SharpAIKit.Common;
 using SharpAIKit.LLM;
+using SharpAIKit.Skill;
+using Microsoft.Extensions.Logging;
 
 namespace SharpAIKit.Agent;
 
@@ -59,11 +61,14 @@ public class AgentStep
 
 /// <summary>
 /// Lightweight AI Agent that supports tool calling and automatic planning.
+/// Supports optional Skill-based behavior constraints and governance.
 /// </summary>
 public class AiAgent
 {
     private readonly ILLMClient _llmClient;
     private readonly Dictionary<string, ToolDefinition> _tools = new();
+    private readonly ISkillResolver? _skillResolver;
+    private readonly ILogger<AiAgent>? _logger;
 
     /// <summary>
     /// Gets or sets the maximum number of execution steps.
@@ -90,12 +95,24 @@ public class AiAgent
         """;
 
     /// <summary>
+    /// Gets the last Skill resolution result (for observability and audit).
+    /// </summary>
+    public SkillResolutionResult? LastSkillResolution { get; private set; }
+
+    /// <summary>
     /// Creates a new AI Agent instance.
     /// </summary>
     /// <param name="llmClient">The LLM client to use.</param>
-    public AiAgent(ILLMClient llmClient)
+    /// <param name="skillResolver">Optional Skill resolver for behavior constraints.</param>
+    /// <param name="logger">Optional logger for observability.</param>
+    public AiAgent(
+        ILLMClient llmClient,
+        ISkillResolver? skillResolver = null,
+        ILogger<AiAgent>? logger = null)
     {
         _llmClient = llmClient ?? throw new ArgumentNullException(nameof(llmClient));
+        _skillResolver = skillResolver;
+        _logger = logger;
     }
 
     /// <summary>
@@ -129,14 +146,75 @@ public class AiAgent
     public async Task<AgentResult> RunAsync(string task, CancellationToken cancellationToken = default)
     {
         var result = new AgentResult();
+        var context = new StrongContext();
+        context.Set("task", task);
+        
+        // ========== Skill Resolution & Constraint Application ==========
+        SkillResolutionResult? skillResolution = null;
+        var availableTools = _tools.Values.ToList();
+        
+        if (_skillResolver != null)
+        {
+            skillResolution = _skillResolver.Resolve(task, context);
+            LastSkillResolution = skillResolution;
+            
+            // Log Skill resolution for observability
+            _logger?.LogInformation(
+                "Skill resolution completed. Activated {Count} skill(s): {SkillIds}. " +
+                "Decision reasons: {Reasons}",
+                skillResolution.ActivatedSkills.Count,
+                string.Join(", ", skillResolution.ActivatedSkillIds),
+                string.Join("; ", skillResolution.DecisionReasons));
+            
+            // Apply context modifications from Skills
+            foreach (var kvp in skillResolution.FinalConstraints.ContextModifications)
+            {
+                context.Set(kvp.Key, kvp.Value);
+            }
+            
+            // Apply tool constraints: filter available tools
+            var allToolNames = availableTools.Select(t => t.Name).ToList();
+            var allowedTools = skillResolution.FinalConstraints.AllowedTools != null
+                ? allToolNames.Intersect(skillResolution.FinalConstraints.AllowedTools).ToList()
+                : allToolNames;
+            var finalToolNames = allowedTools
+                .Except(skillResolution.FinalConstraints.ForbiddenTools)
+                .ToList();
+            
+            // Filter tool definitions based on constraints
+            availableTools = availableTools
+                .Where(t => finalToolNames.Contains(t.Name))
+                .ToList();
+            
+            // Apply MaxSteps constraint if present
+            if (skillResolution.FinalConstraints.MaxSteps.HasValue)
+            {
+                MaxSteps = Math.Min(MaxSteps, skillResolution.FinalConstraints.MaxSteps.Value);
+                _logger?.LogInformation(
+                    "MaxSteps constraint set to {MaxSteps} by Skills",
+                    MaxSteps);
+            }
+            
+            // Log tool filtering
+            if (availableTools.Count != _tools.Count)
+            {
+                var removed = _tools.Keys.Except(finalToolNames).ToList();
+                _logger?.LogInformation(
+                    "Tool filtering applied by Skills. Allowed: {AllowedCount}/{TotalCount}. " +
+                    "Removed tools: {RemovedTools}",
+                    availableTools.Count, _tools.Count, string.Join(", ", removed));
+            }
+        }
+        // ==============================================================
+        
         var messages = new List<ChatMessage>
         {
             ChatMessage.System(SystemPrompt), // We don't inject tools into system prompt if using native tools
             ChatMessage.User(task)
         };
 
-        // Prepare tools for native calling
-        var toolDefinitions = _tools.Values.Select(t => new SharpAIKit.LLM.ToolDefinition
+        // Prepare tools for native calling (using filtered tools)
+        var toolDefinitions = availableTools.Select(t => new SharpAIKit.LLM.ToolDefinition
         {
             Type = "function",
             Function = new SharpAIKit.LLM.FunctionDefinition
@@ -223,6 +301,49 @@ public class AiAgent
             // Execute tool
             if (action.Type == "tool" && !string.IsNullOrEmpty(action.ToolName))
             {
+                // Validate tool against Skill constraints before execution
+                if (skillResolution != null)
+                {
+                    if (!skillResolution.IsToolAllowed(action.ToolName))
+                    {
+                        var denialReason = skillResolution.GetToolDenialReason(action.ToolName) 
+                            ?? "Tool is not allowed by active skill constraints";
+                        action.Result = $"Error: {denialReason}";
+                        action.Type = "error";
+                        
+                        _logger?.LogWarning(
+                            "Tool '{ToolName}' execution denied by Skill constraints: {Reason}",
+                            action.ToolName, denialReason);
+                        
+                        // Add error to conversation
+                        messages.Add(ChatMessage.Assistant(response));
+                        messages.Add(ChatMessage.User($"Tool execution denied: {denialReason}"));
+                        continue;
+                    }
+                    
+                    // Run custom validator if present
+                    if (skillResolution.FinalConstraints.CustomValidator != null)
+                    {
+                        if (!skillResolution.FinalConstraints.CustomValidator(
+                            action.ToolName, 
+                            action.ToolArgs ?? new(), 
+                            context))
+                        {
+                            var denialReason = $"Tool '{action.ToolName}' failed custom validation by active skill constraints";
+                            action.Result = $"Error: {denialReason}";
+                            action.Type = "error";
+                            
+                            _logger?.LogWarning(
+                                "Tool '{ToolName}' failed custom validation",
+                                action.ToolName);
+                            
+                            messages.Add(ChatMessage.Assistant(response));
+                            messages.Add(ChatMessage.User($"Tool execution denied: {denialReason}"));
+                            continue;
+                        }
+                    }
+                }
+                
                 var toolResult = await ExecuteToolAsync(action.ToolName, action.ToolArgs ?? new());
                 action.Result = toolResult;
 

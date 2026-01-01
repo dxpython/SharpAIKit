@@ -1,10 +1,13 @@
 using SharpAIKit.Common;
 using SharpAIKit.Memory;
+using SharpAIKit.Skill;
+using Microsoft.Extensions.Logging;
 
 namespace SharpAIKit.Agent;
 
 /// <summary>
 /// Enhanced agent with modular architecture using IPlanner, IToolExecutor, and IMemory.
+/// Supports Skill-based behavior constraints and governance.
 /// </summary>
 public class EnhancedAgent
 {
@@ -12,11 +15,18 @@ public class EnhancedAgent
     private readonly IToolExecutor _toolExecutor;
     private readonly IMemory _memory;
     private readonly LLM.ILLMClient _llmClient;
+    private readonly ISkillResolver? _skillResolver;
+    private readonly ILogger<EnhancedAgent>? _logger;
 
     /// <summary>
     /// Gets or sets the maximum plan refinement attempts.
     /// </summary>
     public int MaxRefinementAttempts { get; set; } = 3;
+
+    /// <summary>
+    /// Gets the last Skill resolution result (for observability and audit).
+    /// </summary>
+    public SkillResolutionResult? LastSkillResolution { get; private set; }
 
     /// <summary>
     /// Creates a new enhanced agent.
@@ -25,12 +35,16 @@ public class EnhancedAgent
         LLM.ILLMClient llmClient,
         IPlanner? planner = null,
         IToolExecutor? toolExecutor = null,
-        IMemory? memory = null)
+        IMemory? memory = null,
+        ISkillResolver? skillResolver = null,
+        ILogger<EnhancedAgent>? logger = null)
     {
         _llmClient = llmClient ?? throw new ArgumentNullException(nameof(llmClient));
         _planner = planner ?? new SimplePlanner(llmClient);
         _toolExecutor = toolExecutor ?? new DefaultToolExecutor();
         _memory = memory ?? new BufferMemory();
+        _skillResolver = skillResolver;
+        _logger = logger;
     }
 
     /// <summary>
@@ -40,7 +54,67 @@ public class EnhancedAgent
     {
         var context = new StrongContext();
         context.Set("task", task);
-        context.Set("available_tools", _toolExecutor.GetAvailableTools().Select(t => t.Name).ToList());
+        
+        // ========== Skill Resolution & Constraint Application ==========
+        SkillResolutionResult? skillResolution = null;
+        if (_skillResolver != null)
+        {
+            skillResolution = _skillResolver.Resolve(task, context);
+            LastSkillResolution = skillResolution;
+            
+            // Log Skill resolution for observability
+            _logger?.LogInformation(
+                "Skill resolution completed. Activated {Count} skill(s): {SkillIds}. " +
+                "Decision reasons: {Reasons}",
+                skillResolution.ActivatedSkills.Count,
+                string.Join(", ", skillResolution.ActivatedSkillIds),
+                string.Join("; ", skillResolution.DecisionReasons));
+            
+            // Apply context modifications from Skills
+            foreach (var kvp in skillResolution.FinalConstraints.ContextModifications)
+            {
+                context.Set(kvp.Key, kvp.Value);
+            }
+            
+            // Apply tool constraints: filter available tools
+            var allTools = _toolExecutor.GetAvailableTools().Select(t => t.Name).ToList();
+            var allowedTools = skillResolution.FinalConstraints.AllowedTools != null
+                ? allTools.Intersect(skillResolution.FinalConstraints.AllowedTools).ToList()
+                : allTools;
+            var finalTools = allowedTools
+                .Except(skillResolution.FinalConstraints.ForbiddenTools)
+                .ToList();
+            
+            context.Set("available_tools", finalTools);
+            context.Set("skill_constraints", skillResolution.FinalConstraints);
+            context.Set("skill_resolution", skillResolution);
+            
+            // Log tool filtering
+            if (finalTools.Count != allTools.Count)
+            {
+                var removed = allTools.Except(finalTools).ToList();
+                _logger?.LogInformation(
+                    "Tool filtering applied by Skills. Allowed: {AllowedCount}/{TotalCount}. " +
+                    "Removed tools: {RemovedTools}",
+                    finalTools.Count, allTools.Count, string.Join(", ", removed));
+            }
+            
+            // Apply MaxSteps constraint if present
+            if (skillResolution.FinalConstraints.MaxSteps.HasValue)
+            {
+                // Note: This would need to be applied at the planning or execution level
+                // For now, we just log it
+                _logger?.LogInformation(
+                    "MaxSteps constraint set to {MaxSteps} by Skills",
+                    skillResolution.FinalConstraints.MaxSteps.Value);
+            }
+        }
+        else
+        {
+            // No Skill resolver: use all available tools
+            context.Set("available_tools", _toolExecutor.GetAvailableTools().Select(t => t.Name).ToList());
+        }
+        // ==============================================================
 
         // Get relevant memory
         var memoryContext = await _memory.GetContextStringAsync(task);

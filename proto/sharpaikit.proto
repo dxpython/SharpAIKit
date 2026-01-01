@@ -1,0 +1,986 @@
+syntax = "proto3";
+
+package sharpaikit;
+
+option csharp_namespace = "SharpAIKit.Grpc";
+
+// ============================================================================
+// Core Services
+// ============================================================================
+
+// Agent service (existing, keep for compatibility)
+service AgentService {
+  rpc CreateAgent(CreateAgentRequest) returns (CreateAgentResponse);
+  rpc Execute(ExecuteRequest) returns (ExecuteResponse);
+  rpc ExecuteStream(ExecuteRequest) returns (stream ExecuteStreamChunk);
+  rpc ListAvailableSkills(ListSkillsRequest) returns (ListSkillsResponse);
+  rpc GetLastSkillResolution(GetSkillResolutionRequest) returns (GetSkillResolutionResponse);
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+// Chain service - LCEL-style chain composition
+service ChainService {
+  rpc CreateChain(CreateChainRequest) returns (CreateChainResponse);
+  rpc InvokeChain(InvokeChainRequest) returns (InvokeChainResponse);
+  rpc InvokeChainStream(InvokeChainRequest) returns (stream ChainStreamChunk);
+  rpc PipeChains(PipeChainsRequest) returns (CreateChainResponse);
+  rpc ParallelChains(ParallelChainsRequest) returns (CreateChainResponse);
+  rpc BranchChain(BranchChainRequest) returns (CreateChainResponse);
+}
+
+// Memory service - Conversation memory management
+service MemoryService {
+  rpc CreateMemory(CreateMemoryRequest) returns (CreateMemoryResponse);
+  rpc AddMessage(AddMessageRequest) returns (AddMessageResponse);
+  rpc AddExchange(AddExchangeRequest) returns (AddExchangeResponse);
+  rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
+  rpc GetContextString(GetContextStringRequest) returns (GetContextStringResponse);
+  rpc ClearMemory(ClearMemoryRequest) returns (ClearMemoryResponse);
+  rpc GetCount(GetCountRequest) returns (GetCountResponse);
+}
+
+// RAG service - Retrieval-Augmented Generation
+service RAGService {
+  rpc CreateRAG(CreateRAGRequest) returns (CreateRAGResponse);
+  rpc IndexContent(IndexContentRequest) returns (IndexContentResponse);
+  rpc IndexDocument(IndexDocumentRequest) returns (IndexDocumentResponse);
+  rpc IndexDirectory(IndexDirectoryRequest) returns (IndexDirectoryResponse);
+  rpc Ask(AskRequest) returns (AskResponse);
+  rpc AskStream(AskRequest) returns (stream AskStreamChunk);
+  rpc Retrieve(RetrieveRequest) returns (RetrieveResponse);
+  rpc ClearIndex(ClearIndexRequest) returns (ClearIndexResponse);
+  rpc GetDocumentCount(GetDocumentCountRequest) returns (GetDocumentCountResponse);
+}
+
+// Graph service - SharpGraph orchestration
+service GraphService {
+  rpc CreateGraph(CreateGraphRequest) returns (CreateGraphResponse);
+  rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
+  rpc AddEdge(AddEdgeRequest) returns (AddEdgeResponse);
+  rpc RunGraph(RunGraphRequest) returns (RunGraphResponse);
+  rpc RunGraphStream(RunGraphRequest) returns (stream GraphStreamChunk);
+  rpc GetState(GetStateRequest) returns (GetStateResponse);
+  rpc SaveState(SaveStateRequest) returns (SaveStateResponse);
+  rpc LoadState(LoadStateRequest) returns (LoadStateResponse);
+}
+
+// Prompt service - Prompt template management
+service PromptService {
+  rpc CreateTemplate(CreateTemplateRequest) returns (CreateTemplateResponse);
+  rpc FormatTemplate(FormatTemplateRequest) returns (FormatTemplateResponse);
+  rpc CreateChatTemplate(CreateChatTemplateRequest) returns (CreateChatTemplateResponse);
+  rpc FormatChatTemplate(FormatChatTemplateRequest) returns (FormatChatTemplateResponse);
+}
+
+// OutputParser service - Output parsing
+service OutputParserService {
+  rpc ParseJSON(ParseJSONRequest) returns (ParseJSONResponse);
+  rpc ParseBoolean(ParseBooleanRequest) returns (ParseBooleanResponse);
+  rpc ParseList(ParseListRequest) returns (ParseListResponse);
+  rpc ParseXML(ParseXMLRequest) returns (ParseXMLResponse);
+  rpc ParseRegex(ParseRegexRequest) returns (ParseRegexResponse);
+}
+
+// DocumentLoader service - Document loading
+service DocumentLoaderService {
+  rpc LoadText(LoadTextRequest) returns (LoadTextResponse);
+  rpc LoadCSV(LoadCSVRequest) returns (LoadCSVResponse);
+  rpc LoadJSON(LoadJSONRequest) returns (LoadJSONResponse);
+  rpc LoadMarkdown(LoadMarkdownRequest) returns (LoadMarkdownResponse);
+  rpc LoadWeb(LoadWebRequest) returns (LoadWebResponse);
+  rpc LoadDirectory(LoadDirectoryRequest) returns (LoadDirectoryResponse);
+}
+
+// CodeInterpreter service - C# code execution
+service CodeInterpreterService {
+  rpc ExecuteCode(ExecuteCodeRequest) returns (ExecuteCodeResponse);
+  rpc ExecuteCodeTyped(ExecuteCodeTypedRequest) returns (ExecuteCodeTypedResponse);
+}
+
+// Optimizer service - DSPy-style optimization
+service OptimizerService {
+  rpc CreateOptimizer(CreateOptimizerRequest) returns (CreateOptimizerResponse);
+  rpc Optimize(OptimizeRequest) returns (OptimizeResponse);
+  rpc OptimizeStream(OptimizeRequest) returns (stream OptimizeStreamChunk);
+}
+
+// Tool service - Tool registration and management
+service ToolService {
+  rpc RegisterTool(RegisterToolRequest) returns (RegisterToolResponse);
+  rpc ListTools(ListToolsRequest) returns (ListToolsResponse);
+  rpc UnregisterTool(UnregisterToolRequest) returns (UnregisterToolResponse);
+}
+
+// Observability service - Logging, metrics, tracing
+service ObservabilityService {
+  rpc Log(LogRequest) returns (LogResponse);
+  rpc RecordMetric(RecordMetricRequest) returns (RecordMetricResponse);
+  rpc StartTrace(StartTraceRequest) returns (StartTraceResponse);
+  rpc EndTrace(EndTraceRequest) returns (EndTraceResponse);
+  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse);
+}
+
+// ============================================================================
+// Common Messages
+// ============================================================================
+
+message ChatMessage {
+  string role = 1;  // "user", "assistant", "system"
+  string content = 2;
+  string name = 3;  // Optional name
+}
+
+message ChainContext {
+  string input = 1;
+  string output = 2;
+  map<string, string> data = 3;  // Additional context data
+}
+
+message GraphState {
+  string current_node = 1;
+  string next_node = 2;
+  bool should_end = 3;
+  string output = 4;
+  map<string, string> data = 5;
+}
+
+message VectorDocument {
+  string content = 1;
+  repeated float embedding = 2;
+  map<string, string> metadata = 3;
+}
+
+message SearchResult {
+  VectorDocument document = 1;
+  float similarity = 2;
+}
+
+// ============================================================================
+// Agent Service Messages (existing, keep for compatibility)
+// ============================================================================
+
+message CreateAgentRequest {
+  string agent_id = 1;
+  string api_key = 2;
+  string base_url = 3;
+  string model = 4;
+  repeated string skill_ids = 5;
+  map<string, string> options = 6;
+}
+
+message CreateAgentResponse {
+  bool success = 1;
+  string agent_id = 2;
+  string error = 3;
+}
+
+message ExecuteRequest {
+  string agent_id = 1;
+  string task = 2;
+  repeated ToolDefinition tools = 3;
+  map<string, string> context = 4;
+}
+
+message ExecuteResponse {
+  bool success = 1;
+  string output = 2;
+  repeated ExecutionStep steps = 3;
+  SkillResolutionInfo skill_resolution = 4;
+  repeated string denied_tools = 5;
+  string error = 6;
+  string error_code = 7;
+}
+
+message ExecuteStreamChunk {
+  oneof content {
+    string text_chunk = 1;
+    ExecutionStep step = 2;
+    SkillResolutionInfo skill_resolution = 3;
+    string error = 4;
+    bool done = 5;
+  }
+}
+
+message ToolDefinition {
+  string name = 1;
+  string description = 2;
+  repeated ToolParameter parameters = 3;
+}
+
+message ToolParameter {
+  string name = 1;
+  string type = 2;
+  string description = 3;
+  bool required = 4;
+}
+
+message ExecutionStep {
+  int32 step_number = 1;
+  string type = 2;
+  string thought = 3;
+  string action = 4;
+  string observation = 5;
+  string tool_name = 6;
+  map<string, string> tool_args = 7;
+}
+
+message SkillResolutionInfo {
+  repeated string activated_skill_ids = 1;
+  repeated string decision_reasons = 2;
+  SkillConstraintsInfo constraints = 3;
+  map<string, string> tool_denial_reasons = 4;
+}
+
+message SkillConstraintsInfo {
+  repeated string allowed_tools = 1;
+  repeated string forbidden_tools = 2;
+  int32 max_steps = 3;
+  int64 max_execution_time_ms = 4;
+}
+
+message ListSkillsRequest {}
+
+message ListSkillsResponse {
+  repeated SkillInfo skills = 1;
+}
+
+message SkillInfo {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string version = 4;
+  int32 priority = 5;
+  string scope = 6;
+}
+
+message GetSkillResolutionRequest {
+  string agent_id = 1;
+}
+
+message GetSkillResolutionResponse {
+  bool success = 1;
+  SkillResolutionInfo skill_resolution = 2;
+  string error = 3;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  bool healthy = 1;
+  string version = 2;
+}
+
+// ============================================================================
+// Chain Service Messages
+// ============================================================================
+
+message CreateChainRequest {
+  string chain_id = 1;
+  string chain_type = 2;  // "llm", "lambda", "prompt"
+  string api_key = 3;
+  string base_url = 4;
+  string model = 5;
+  string system_prompt = 6;
+  map<string, string> options = 7;
+}
+
+message CreateChainResponse {
+  bool success = 1;
+  string chain_id = 2;
+  string error = 3;
+}
+
+message InvokeChainRequest {
+  string chain_id = 1;
+  ChainContext context = 2;
+}
+
+message InvokeChainResponse {
+  bool success = 1;
+  ChainContext context = 2;
+  string error = 3;
+}
+
+message ChainStreamChunk {
+  oneof content {
+    ChainContext context = 1;
+    string error = 2;
+    bool done = 3;
+  }
+}
+
+message PipeChainsRequest {
+  string chain_id_1 = 1;
+  string chain_id_2 = 2;
+  string result_chain_id = 3;
+}
+
+message ParallelChainsRequest {
+  repeated string chain_ids = 1;
+  string result_chain_id = 2;
+}
+
+message BranchChainRequest {
+  string chain_id = 1;
+  string condition_expression = 2;  // JavaScript-like expression
+  string true_chain_id = 3;
+  string false_chain_id = 4;
+  string result_chain_id = 5;
+}
+
+// ============================================================================
+// Memory Service Messages
+// ============================================================================
+
+message CreateMemoryRequest {
+  string memory_id = 1;
+  string memory_type = 2;  // "buffer", "window", "summary", "vector", "entity"
+  string api_key = 3;
+  string base_url = 4;
+  string model = 5;
+  map<string, string> options = 6;  // e.g., MaxMessages, WindowSize, TopK
+}
+
+message CreateMemoryResponse {
+  bool success = 1;
+  string memory_id = 2;
+  string error = 3;
+}
+
+message AddMessageRequest {
+  string memory_id = 1;
+  ChatMessage message = 2;
+}
+
+message AddMessageResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message AddExchangeRequest {
+  string memory_id = 1;
+  string user_message = 2;
+  string assistant_message = 3;
+}
+
+message AddExchangeResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message GetMessagesRequest {
+  string memory_id = 1;
+  string query = 2;  // Optional query for vector memory
+}
+
+message GetMessagesResponse {
+  bool success = 1;
+  repeated ChatMessage messages = 2;
+  string error = 3;
+}
+
+message GetContextStringRequest {
+  string memory_id = 1;
+  string query = 2;  // Optional query for vector memory
+}
+
+message GetContextStringResponse {
+  bool success = 1;
+  string context_string = 2;
+  string error = 3;
+}
+
+message ClearMemoryRequest {
+  string memory_id = 1;
+}
+
+message ClearMemoryResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message GetCountRequest {
+  string memory_id = 1;
+}
+
+message GetCountResponse {
+  bool success = 1;
+  int32 count = 2;
+  string error = 3;
+}
+
+// ============================================================================
+// RAG Service Messages
+// ============================================================================
+
+message CreateRAGRequest {
+  string rag_id = 1;
+  string api_key = 2;
+  string base_url = 3;
+  string model = 4;
+  int32 top_k = 5;
+  string system_prompt_template = 6;
+  map<string, string> options = 7;
+}
+
+message CreateRAGResponse {
+  bool success = 1;
+  string rag_id = 2;
+  string error = 3;
+}
+
+message IndexContentRequest {
+  string rag_id = 1;
+  string content = 2;
+  map<string, string> metadata = 3;
+}
+
+message IndexContentResponse {
+  bool success = 1;
+  int32 chunks_indexed = 2;
+  string error = 3;
+}
+
+message IndexDocumentRequest {
+  string rag_id = 1;
+  string file_path = 2;
+}
+
+message IndexDocumentResponse {
+  bool success = 1;
+  int32 chunks_indexed = 2;
+  string error = 3;
+}
+
+message IndexDirectoryRequest {
+  string rag_id = 1;
+  string directory_path = 2;
+  string search_pattern = 3;  // e.g., "*.txt", "*.md"
+}
+
+message IndexDirectoryResponse {
+  bool success = 1;
+  int32 files_indexed = 2;
+  int32 total_chunks = 3;
+  string error = 4;
+}
+
+message AskRequest {
+  string rag_id = 1;
+  string question = 2;
+}
+
+message AskResponse {
+  bool success = 1;
+  string answer = 2;
+  repeated SearchResult retrieved_docs = 3;
+  string error = 4;
+}
+
+message AskStreamChunk {
+  oneof content {
+    string text_chunk = 1;
+    SearchResult retrieved_doc = 2;
+    string error = 3;
+    bool done = 4;
+  }
+}
+
+message RetrieveRequest {
+  string rag_id = 1;
+  string query = 2;
+  int32 top_k = 3;
+}
+
+message RetrieveResponse {
+  bool success = 1;
+  repeated SearchResult results = 2;
+  string error = 3;
+}
+
+message ClearIndexRequest {
+  string rag_id = 1;
+}
+
+message ClearIndexResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message GetDocumentCountRequest {
+  string rag_id = 1;
+}
+
+message GetDocumentCountResponse {
+  bool success = 1;
+  int32 count = 2;
+  string error = 3;
+}
+
+// ============================================================================
+// Graph Service Messages
+// ============================================================================
+
+message CreateGraphRequest {
+  string graph_id = 1;
+  string start_node = 2;
+  int32 max_iterations = 3;
+  map<string, string> options = 4;
+}
+
+message CreateGraphResponse {
+  bool success = 1;
+  string graph_id = 2;
+  string error = 3;
+}
+
+message AddNodeRequest {
+  string graph_id = 1;
+  string node_name = 2;
+  string description = 3;
+  string node_type = 4;  // "action", "condition", "fork", "join"
+  string action_code = 5;  // For action nodes
+  string condition_expression = 6;  // For condition nodes
+  map<string, string> options = 7;
+}
+
+message AddNodeResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message AddEdgeRequest {
+  string graph_id = 1;
+  string from_node = 2;
+  string to_node = 3;
+  string condition = 4;  // Optional condition
+}
+
+message AddEdgeResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message RunGraphRequest {
+  string graph_id = 1;
+  GraphState initial_state = 2;
+}
+
+message RunGraphResponse {
+  bool success = 1;
+  GraphState final_state = 2;
+  repeated string execution_path = 3;  // Node names in execution order
+  string error = 4;
+}
+
+message GraphStreamChunk {
+  oneof content {
+    GraphState state = 1;
+    string node_name = 2;
+    string error = 3;
+    bool done = 4;
+  }
+}
+
+message GetStateRequest {
+  string graph_id = 1;
+}
+
+message GetStateResponse {
+  bool success = 1;
+  GraphState state = 2;
+  string error = 3;
+}
+
+message SaveStateRequest {
+  string graph_id = 1;
+  string file_path = 2;
+}
+
+message SaveStateResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message LoadStateRequest {
+  string graph_id = 1;
+  string file_path = 2;
+}
+
+message LoadStateResponse {
+  bool success = 1;
+  GraphState state = 2;
+  string error = 3;
+}
+
+// ============================================================================
+// Prompt Service Messages
+// ============================================================================
+
+message CreateTemplateRequest {
+  string template_id = 1;
+  string template = 2;  // Template string with {placeholders}
+}
+
+message CreateTemplateResponse {
+  bool success = 1;
+  string template_id = 2;
+  string error = 3;
+}
+
+message FormatTemplateRequest {
+  string template_id = 1;
+  map<string, string> variables = 2;
+}
+
+message FormatTemplateResponse {
+  bool success = 1;
+  string formatted = 2;
+  string error = 3;
+}
+
+message CreateChatTemplateRequest {
+  string template_id = 1;
+  repeated ChatMessage messages = 2;
+  map<string, string> variables = 3;
+}
+
+message CreateChatTemplateResponse {
+  bool success = 1;
+  string template_id = 2;
+  string error = 3;
+}
+
+message FormatChatTemplateRequest {
+  string template_id = 1;
+  map<string, string> variables = 2;
+}
+
+message FormatChatTemplateResponse {
+  bool success = 1;
+  repeated ChatMessage messages = 2;
+  string error = 3;
+}
+
+// ============================================================================
+// OutputParser Service Messages
+// ============================================================================
+
+message ParseJSONRequest {
+  string text = 1;
+  string schema = 2;  // Optional JSON schema
+}
+
+message ParseJSONResponse {
+  bool success = 1;
+  string json = 2;
+  string error = 3;
+}
+
+message ParseBooleanRequest {
+  string text = 1;
+}
+
+message ParseBooleanResponse {
+  bool success = 1;
+  bool value = 2;
+  string error = 3;
+}
+
+message ParseListRequest {
+  string text = 1;
+  string separator = 2;  // Default: ","
+}
+
+message ParseListResponse {
+  bool success = 1;
+  repeated string items = 2;
+  string error = 3;
+}
+
+message ParseXMLRequest {
+  string text = 1;
+  string root_tag = 2;
+}
+
+message ParseXMLResponse {
+  bool success = 1;
+  string xml = 2;
+  string error = 3;
+}
+
+message ParseRegexRequest {
+  string text = 1;
+  string pattern = 2;
+  int32 group = 3;  // Which capture group to return
+}
+
+message ParseRegexResponse {
+  bool success = 1;
+  string match = 2;
+  repeated string groups = 3;
+  string error = 4;
+}
+
+// ============================================================================
+// DocumentLoader Service Messages
+// ============================================================================
+
+message LoadTextRequest {
+  string file_path = 1;
+  string encoding = 2;  // Default: "utf-8"
+}
+
+message LoadTextResponse {
+  bool success = 1;
+  string content = 2;
+  string error = 3;
+}
+
+message LoadCSVRequest {
+  string file_path = 1;
+  bool has_header = 2;
+  string delimiter = 3;  // Default: ","
+}
+
+message LoadCSVResponse {
+  bool success = 1;
+  repeated string headers = 2;
+  repeated CSVRow rows = 3;
+  string error = 4;
+}
+
+message CSVRow {
+  map<string, string> values = 1;
+}
+
+message LoadJSONRequest {
+  string file_path = 1;
+}
+
+message LoadJSONResponse {
+  bool success = 1;
+  string json = 2;
+  string error = 3;
+}
+
+message LoadMarkdownRequest {
+  string file_path = 1;
+}
+
+message LoadMarkdownResponse {
+  bool success = 1;
+  string content = 2;
+  string error = 3;
+}
+
+message LoadWebRequest {
+  string url = 1;
+  map<string, string> headers = 2;
+}
+
+message LoadWebResponse {
+  bool success = 1;
+  string content = 2;
+  string error = 3;
+}
+
+message LoadDirectoryRequest {
+  string directory_path = 1;
+  string search_pattern = 2;  // e.g., "*.txt"
+  bool recursive = 3;
+}
+
+message LoadDirectoryResponse {
+  bool success = 1;
+  repeated DocumentInfo documents = 2;
+  string error = 3;
+}
+
+message DocumentInfo {
+  string file_path = 1;
+  string content = 2;
+  map<string, string> metadata = 3;
+}
+
+// ============================================================================
+// CodeInterpreter Service Messages
+// ============================================================================
+
+message ExecuteCodeRequest {
+  string code = 1;
+  int32 timeout_ms = 2;  // Default: 30000
+}
+
+message ExecuteCodeResponse {
+  bool success = 1;
+  string output = 2;
+  string error = 3;
+  string stdout = 4;
+  string stderr = 5;
+}
+
+message ExecuteCodeTypedRequest {
+  string code = 1;
+  string type = 2;  // e.g., "int", "double", "string", "List<int>"
+  int32 timeout_ms = 3;
+}
+
+message ExecuteCodeTypedResponse {
+  bool success = 1;
+  string value_json = 2;  // JSON representation of typed value
+  string error = 3;
+  string stdout = 4;
+  string stderr = 5;
+}
+
+// ============================================================================
+// Optimizer Service Messages
+// ============================================================================
+
+message CreateOptimizerRequest {
+  string optimizer_id = 1;
+  string api_key = 2;
+  string base_url = 3;
+  string model = 4;
+  string task_description = 5;
+  string metric_expression = 6;  // JavaScript-like expression for evaluation
+  int32 max_iterations = 7;
+  map<string, string> options = 8;
+}
+
+message CreateOptimizerResponse {
+  bool success = 1;
+  string optimizer_id = 2;
+  string error = 3;
+}
+
+message OptimizeRequest {
+  string optimizer_id = 1;
+  string initial_prompt = 2;
+  repeated string examples = 3;  // Example inputs
+}
+
+message OptimizeResponse {
+  bool success = 1;
+  string optimized_prompt = 2;
+  float metric_score = 3;
+  int32 iterations = 4;
+  string error = 5;
+}
+
+message OptimizeStreamChunk {
+  oneof content {
+    string prompt_candidate = 1;
+    float metric_score = 2;
+    int32 iteration = 3;
+    string error = 4;
+    bool done = 5;
+  }
+}
+
+// ============================================================================
+// Tool Service Messages
+// ============================================================================
+
+message RegisterToolRequest {
+  string tool_id = 1;
+  ToolDefinition definition = 2;
+  string implementation_code = 3;  // C# code for tool implementation
+}
+
+message RegisterToolResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message ListToolsRequest {
+  string agent_id = 1;  // Optional: filter by agent
+}
+
+message ListToolsResponse {
+  bool success = 1;
+  repeated ToolDefinition tools = 2;
+  string error = 3;
+}
+
+message UnregisterToolRequest {
+  string tool_id = 1;
+}
+
+message UnregisterToolResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+// ============================================================================
+// Observability Service Messages
+// ============================================================================
+
+message LogRequest {
+  string level = 1;  // "debug", "info", "warn", "error"
+  string message = 2;
+  map<string, string> properties = 3;
+  string trace_id = 4;
+}
+
+message LogResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message RecordMetricRequest {
+  string name = 1;
+  double value = 2;
+  map<string, string> tags = 3;
+  string metric_type = 4;  // "counter", "gauge", "histogram"
+}
+
+message RecordMetricResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message StartTraceRequest {
+  string operation_name = 1;
+  map<string, string> attributes = 2;
+}
+
+message StartTraceResponse {
+  bool success = 1;
+  string trace_id = 2;
+  string span_id = 3;
+  string error = 4;
+}
+
+message EndTraceRequest {
+  string trace_id = 1;
+  string span_id = 2;
+  string status = 3;  // "ok", "error"
+  map<string, string> attributes = 4;
+}
+
+message EndTraceResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message GetMetricsRequest {
+  string metric_name = 1;  // Optional: filter by name
+  string start_time = 2;  // ISO 8601 timestamp
+  string end_time = 3;  // ISO 8601 timestamp
+}
+
+message GetMetricsResponse {
+  bool success = 1;
+  repeated MetricData metrics = 2;
+  string error = 3;
+}
+
+message MetricData {
+  string name = 1;
+  double value = 2;
+  map<string, string> tags = 3;
+  string timestamp = 4;
+}
+

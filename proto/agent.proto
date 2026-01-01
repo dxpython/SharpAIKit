@@ -1,0 +1,159 @@
+syntax = "proto3";
+
+package sharpaikit.agent;
+
+option csharp_namespace = "SharpAIKit.Grpc";
+
+// Agent service for executing AI agent tasks
+service AgentService {
+  // Create a new agent instance
+  rpc CreateAgent(CreateAgentRequest) returns (CreateAgentResponse);
+  
+  // Execute an agent task
+  rpc Execute(ExecuteRequest) returns (ExecuteResponse);
+  
+  // Execute an agent task asynchronously (streaming)
+  rpc ExecuteStream(ExecuteRequest) returns (stream ExecuteStreamChunk);
+  
+  // List available skills
+  rpc ListAvailableSkills(ListSkillsRequest) returns (ListSkillsResponse);
+  
+  // Get last skill resolution for an agent
+  rpc GetLastSkillResolution(GetSkillResolutionRequest) returns (GetSkillResolutionResponse);
+  
+  // Health check
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+// Request to create an agent
+message CreateAgentRequest {
+  string agent_id = 1;  // Unique agent identifier
+  string api_key = 2;   // LLM API key
+  string base_url = 3;  // LLM base URL
+  string model = 4;     // Model name
+  repeated string skill_ids = 5;  // Skill IDs to activate
+  map<string, string> options = 6;  // Additional options
+}
+
+// Response from creating an agent
+message CreateAgentResponse {
+  bool success = 1;
+  string agent_id = 2;
+  string error = 3;
+}
+
+// Request to execute an agent task
+message ExecuteRequest {
+  string agent_id = 1;
+  string task = 2;
+  repeated ToolDefinition tools = 3;
+  map<string, string> context = 4;
+}
+
+// Tool definition
+message ToolDefinition {
+  string name = 1;
+  string description = 2;
+  repeated ToolParameter parameters = 3;
+}
+
+// Tool parameter
+message ToolParameter {
+  string name = 1;
+  string type = 2;
+  string description = 3;
+  bool required = 4;
+}
+
+// Response from executing an agent task
+message ExecuteResponse {
+  bool success = 1;
+  string output = 2;
+  repeated ExecutionStep steps = 3;
+  SkillResolutionInfo skill_resolution = 4;
+  repeated string denied_tools = 5;
+  string error = 6;
+  string error_code = 7;
+}
+
+// Execution step
+message ExecutionStep {
+  int32 step_number = 1;
+  string type = 2;
+  string thought = 3;
+  string action = 4;
+  string observation = 5;
+  string tool_name = 6;
+  map<string, string> tool_args = 7;
+}
+
+// Skill resolution information
+message SkillResolutionInfo {
+  repeated string activated_skill_ids = 1;
+  repeated string decision_reasons = 2;
+  SkillConstraintsInfo constraints = 3;
+  map<string, string> tool_denial_reasons = 4;  // tool_name -> reason
+}
+
+// Skill constraints information
+message SkillConstraintsInfo {
+  repeated string allowed_tools = 1;
+  repeated string forbidden_tools = 2;
+  int32 max_steps = 3;
+  int64 max_execution_time_ms = 4;
+}
+
+// Streaming chunk for ExecuteStream
+message ExecuteStreamChunk {
+  oneof content {
+    string text_chunk = 1;
+    ExecutionStep step = 2;
+    SkillResolutionInfo skill_resolution = 3;
+    string error = 4;
+    bool done = 5;
+  }
+}
+
+// Request to list available skills
+message ListSkillsRequest {
+  // Empty - lists all available skills
+}
+
+// Response with available skills
+message ListSkillsResponse {
+  repeated SkillInfo skills = 1;
+}
+
+// Skill information
+message SkillInfo {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string version = 4;
+  int32 priority = 5;
+  string scope = 6;
+}
+
+// Request to get skill resolution
+message GetSkillResolutionRequest {
+  string agent_id = 1;
+}
+
+// Response with skill resolution
+message GetSkillResolutionResponse {
+  bool success = 1;
+  SkillResolutionInfo skill_resolution = 2;
+  string error = 3;
+}
+
+// Health check request
+message HealthCheckRequest {
+  // Empty
+}
+
+// Health check response
+message HealthCheckResponse {
+  bool healthy = 1;
+  string version = 2;
+}
+

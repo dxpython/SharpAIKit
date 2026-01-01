@@ -80,6 +80,56 @@ public class DefaultToolExecutor : IToolExecutor
 
         try
         {
+            // ========== Skill Constraint Validation ==========
+            var constraints = context.Get<Skill.SkillConstraints>("skill_constraints");
+            if (constraints != null)
+            {
+                // Check if tool is forbidden
+                if (constraints.ForbiddenTools.Contains(toolName))
+                {
+                    var resolution = context.Get<Skill.SkillResolutionResult>("skill_resolution");
+                    var reason = resolution?.GetToolDenialReason(toolName) 
+                        ?? $"Tool '{toolName}' is forbidden by active skill constraints";
+                    
+                    result.Success = false;
+                    result.Error = reason;
+                    result.Metadata["skill_constraint_violation"] = true;
+                    result.Metadata["denial_reason"] = reason;
+                    return result;
+                }
+                
+                // Check if tool is in allowed list (if whitelist exists)
+                if (constraints.AllowedTools != null && !constraints.AllowedTools.Contains(toolName))
+                {
+                    var resolution = context.Get<Skill.SkillResolutionResult>("skill_resolution");
+                    var reason = resolution?.GetToolDenialReason(toolName)
+                        ?? $"Tool '{toolName}' is not in the allowed tools list";
+                    
+                    result.Success = false;
+                    result.Error = reason;
+                    result.Metadata["skill_constraint_violation"] = true;
+                    result.Metadata["denial_reason"] = reason;
+                    return result;
+                }
+                
+                // Run custom validator if present
+                if (constraints.CustomValidator != null)
+                {
+                    if (!constraints.CustomValidator(toolName, arguments, context))
+                    {
+                        var resolution = context.Get<Skill.SkillResolutionResult>("skill_resolution");
+                        var reason = $"Tool '{toolName}' failed custom validation by active skill constraints";
+                        
+                        result.Success = false;
+                        result.Error = reason;
+                        result.Metadata["skill_constraint_violation"] = true;
+                        result.Metadata["denial_reason"] = reason;
+                        return result;
+                    }
+                }
+            }
+            // ================================================
+            
             ToolDefinition? tool;
             lock (_lock)
             {
