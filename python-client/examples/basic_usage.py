@@ -7,7 +7,7 @@ import asyncio
 from sharpaikit import Agent
 
 # Configuration
-API_KEY = "sk-502f0625194247d4adc2a9c7659c0ffe"
+API_KEY = "YOUR-API-KEY"
 BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 MODEL = "qwen-plus"
 
