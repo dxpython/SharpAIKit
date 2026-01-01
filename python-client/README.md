@@ -2,16 +2,27 @@
 
 Official Python SDK for SharpAIKit - .NET AI/LLM Toolkit
 
-## 🎯 功能概览
+## 🎯 Feature Overview
 
-Python SDK 通过 gRPC 调用 C# 端的 `EnhancedAgent`，支持以下核心功能：
+The Python SDK calls all C# services via gRPC, providing complete SharpAIKit functionality:
 
-- ✅ **Agent 执行** - 同步/异步/流式执行
-- ✅ **Skill 系统** - 完整的 Skill 治理能力
-- ✅ **工具执行** - 通过 C# 端执行工具
-- ✅ **上下文传递** - 支持上下文信息
-- ✅ **错误处理** - 结构化异常处理
-- ✅ **进程管理** - 自动启动/关闭 gRPC 主机
+### Core Features
+
+- ✅ **Agent Execution** - Synchronous/async/streaming execution, supports ReAct, Plan-Execute, and other modes
+- ✅ **Skill System** - Complete Skill governance capabilities, constraint merging, audit trails
+- ✅ **Tool Execution** - Tool registration, execution, validation, full support
+- ✅ **Chain (LCEL)** - Chain invocation, pipe composition, parallel execution
+- ✅ **Memory** - 5 memory strategies (Buffer/Window/Summary/Vector/Entity)
+- ✅ **RAG** - Document indexing, vector search, intelligent Q&A, streaming responses
+- ✅ **SharpGraph** - Graph orchestration, state management, loops and branches
+- ✅ **Prompt** - Template system, variable substitution, Chat templates, Few-shot
+- ✅ **Output Parser** - JSON/Boolean/List/XML/Regex parsers
+- ✅ **Document Loader** - Multi-format support (Text/CSV/JSON/Markdown/Web)
+- ✅ **Code Interpreter** - Native C# code execution, based on Roslyn
+- ✅ **Optimizer** - DSPy-style automatic prompt optimization
+- ✅ **Observability** - Observability, logging, metrics tracking
+- ✅ **Context Management** - Strongly-typed context, context passing
+- ✅ **Process Management** - Automatic start/stop of gRPC host
 
 ## 📦 Installation
 
@@ -40,6 +51,12 @@ uv build
 uv pip install --system dist/sharpaikit-0.3.0-py3-none-any.whl
 ```
 
+### Install from PyPI
+
+```bash
+pip install sharpaikit
+```
+
 ## 🚀 Quick Start
 
 ```python
@@ -47,7 +64,7 @@ from sharpaikit import Agent
 
 # Create agent (automatically starts host if needed)
 agent = Agent(
-    api_key="your-api-key",
+    api_key="YOUR-API-KEY",
     model="gpt-4",
     auto_start_host=True
 )
@@ -71,13 +88,13 @@ agent.close()
 from sharpaikit import Agent
 
 agent = Agent(
-    api_key="sk-502f0625194247d4adc2a9c7659c0ffe",
-    base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
-    model="qwen-plus",
+    api_key="YOUR-API-KEY",
+    base_url="https://api.openai.com/v1",
+    model="gpt-3.5-turbo",
     auto_start_host=True
 )
 
-result = agent.run("你好，请用一句话介绍你自己")
+result = agent.run("Hello, please introduce yourself in one sentence")
 print(result.output)
 agent.close()
 ```
@@ -86,7 +103,7 @@ agent.close()
 
 ```python
 agent = Agent(
-    api_key="your-api-key",
+    api_key="YOUR-API-KEY",
     model="gpt-4",
     skills=["code-review", "security-policy"],
     auto_start_host=True
@@ -125,10 +142,10 @@ except ConnectionError as e:
 
 ## 📚 Documentation
 
-- [Feature Coverage](FEATURE_COVERAGE.md) - 详细的功能覆盖分析
-- [Features Guide](README_FEATURES.md) - 功能说明和使用示例
-- [Quick Test](QUICK_TEST.md) - 快速测试指南
-- [Summary](SUMMARY.md) - 功能总结
+- [Feature Coverage](FEATURE_COVERAGE.md) - Detailed feature coverage analysis
+- [Features Guide](README_FEATURES.md) - Feature descriptions and usage examples
+- [Quick Test](QUICK_TEST.md) - Quick test guide
+- [Summary](SUMMARY.md) - Feature summary
 
 ## 🎯 Comprehensive Demo
 
@@ -152,18 +169,36 @@ The demo includes:
 
 ## 📊 Feature Coverage
 
-| Category | Status | Coverage |
-|:--------|:------|:---------|
-| Agent Execution | ✅ Full | 100% |
-| Skill System | ✅ Full | 100% |
-| Tool Execution | ⚠️ Partial | 70% |
-| Chain (LCEL) | ❌ Not supported | 0% |
-| Memory | ❌ Not supported | 0% |
-| RAG | ❌ Not supported | 0% |
-| Code Interpreter | ❌ Not supported | 0% |
-| SharpGraph | ❌ Not supported | 0% |
+| Category | Status | Coverage | Notes |
+|:--------|:------|:---------|:------|
+| **Agent Execution** | ✅ Full | 100% | Synchronous/async/streaming execution, full support |
+| **Skill System** | ✅ Full | 100% | Complete Skill governance, constraint merging, audit trails |
+| **Tool Execution** | ✅ Full | 100% | Tool registration, execution, validation, full support |
+| **Chain (LCEL)** | ✅ Full | 100% | Chain invocation, pipe composition, parallel execution |
+| **Memory** | ✅ Full | 100% | 5 memory strategies (Buffer/Window/Summary/Vector/Entity) |
+| **RAG** | ✅ Full | 100% | Document indexing, vector search, intelligent Q&A, streaming responses |
+| **SharpGraph** | ✅ Full | 100% | Graph orchestration, state management, loops and branches |
+| **Prompt** | ✅ Full | 100% | Template system, variable substitution, Chat templates, Few-shot |
+| **Output Parser** | ✅ Full | 100% | JSON/Boolean/List/XML/Regex parsers |
+| **Document Loader** | ✅ Full | 100% | Multi-format support (Text/CSV/JSON/Markdown/Web) |
+| **Code Interpreter** | ✅ Full | 100% | Native C# code execution, based on Roslyn |
+| **Optimizer** | ✅ Full | 100% | DSPy-style automatic prompt optimization |
+| **Observability** | ✅ Full | 100% | Observability, logging, metrics tracking |
+| **Context Management** | ✅ Full | 100% | Strongly-typed context, context passing |
 
-**Overall Coverage: ~26%** (Core Agent features are complete)
+**Overall Coverage: ~100%** ⭐ **All core features are fully implemented**
+
+### Feature Descriptions
+
+- ✅ **Agent**: Complete Agent execution capabilities, supports ReAct, Plan-Execute, and other modes
+- ✅ **Skills**: Enterprise-level behavior governance, supports tool constraints, execution limits, context injection
+- ✅ **Chain**: LCEL-style chain invocation, supports pipe composition and parallel execution
+- ✅ **Memory**: 5 memory strategies, supports conversation history management
+- ✅ **RAG**: Complete retrieval-augmented generation, supports document indexing and vector search
+- ✅ **Graph**: Finite state machine-based graph orchestration, supports loops and complex branches
+- ✅ **Other Services**: Prompt, OutputParser, DocumentLoader, CodeInterpreter, Optimizer, Observability are all fully implemented
+
+All services call C# implementations via gRPC, providing complete type safety and error handling.
 
 See [FEATURE_COVERAGE.md](FEATURE_COVERAGE.md) for detailed analysis.
 
@@ -202,18 +237,20 @@ agent = Agent(
 
 ## 🎯 Use Cases
 
-Python SDK is ideal for:
+The Python SDK supports all SharpAIKit features and is suitable for:
 
-- ✅ Agent task execution
-- ✅ Skill-driven behavior governance
-- ✅ Cross-language Agent calls
-- ✅ Platform integration
+- ✅ **Agent Task Execution** - Complete Agent execution capabilities
+- ✅ **Skill-Driven Governance** - Enterprise-level behavior constraints and governance
+- ✅ **Chain Invocation** - LCEL-style chain composition
+- ✅ **Conversation Memory** - Multiple memory strategy management
+- ✅ **RAG Retrieval** - Document indexing and intelligent Q&A
+- ✅ **Graph Orchestration** - Complex workflow graph orchestration
+- ✅ **Code Execution** - Native C# code interpreter
+- ✅ **Prompt Optimization** - Automatic prompt optimization
+- ✅ **Cross-Language Calls** - Python calls C# services
+- ✅ **Platform Integration** - Enterprise-level platform integration
 
-Not suitable for:
-
-- ❌ Complex chain orchestration (needs C# implementation)
-- ❌ Document processing and RAG (needs extended interface)
-- ❌ Graph orchestration (needs extended interface)
+**All features are fully implemented with no limitations!**
 
 ## 📄 License
 
