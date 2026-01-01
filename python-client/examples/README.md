@@ -36,9 +36,9 @@ This directory contains example scripts demonstrating how to use the SharpAIKit 
 
 4. **Set your API key**:
    ```bash
-   export OPENAI_API_KEY="your-api-key-here"
+   export OPENAI_API_KEY="YOUR-API-KEY"
    # Or for DeepSeek
-   export DEEPSEEK_API_KEY="your-api-key-here"
+   export DEEPSEEK_API_KEY="YOUR-API-KEY"
    ```
 
 ## Running Examples

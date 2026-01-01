@@ -10,7 +10,7 @@ namespace SharpAIKit.Tests.LLM;
 /// </summary>
 public class QwenIntegrationTests
 {
-    private const string QwenApiKey = "YOUR-API-KEYs";
+    private const string QwenApiKey = "YOUR-API-KEY";
     private const string QwenBaseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1";
     private const string QwenModel = "qwen-plus";
 

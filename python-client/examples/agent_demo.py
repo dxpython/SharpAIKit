@@ -33,11 +33,12 @@ def main():
         print("⚠️  Warning: No API key found in environment variables")
         print("   Please set OPENAI_API_KEY, DEEPSEEK_API_KEY, or QWEN_API_KEY")
         print("   Or edit this script to set your API key directly")
-        # Default to Qwen API key for testing (通义千问)
-        api_key = "sk-502f0625194247d4adc2a9c7659c0ffe"
-        print("   Using default Qwen API key for testing")
+        # Default API key for testing
+        api_key = "YOUR-API-KEY"
+        print("   Please set YOUR-API-KEY in the script or environment variables")
     
     # Use Qwen configuration if using Qwen API key
+
     if api_key == "YOUR-API-KEY" or os.getenv("QWEN_API_KEY"):
         base_url = os.getenv("LLM_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
         model = os.getenv("LLM_MODEL", "qwen-turbo")

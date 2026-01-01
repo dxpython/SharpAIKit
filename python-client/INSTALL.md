@@ -52,7 +52,7 @@ from sharpaikit import Agent
 
 # This will automatically start the host if needed
 agent = Agent(
-    api_key="your-api-key",
+    api_key="YOUR-API-KEY",
     model="gpt-3.5-turbo",
     auto_start_host=True
 )

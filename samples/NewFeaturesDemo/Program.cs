@@ -6,10 +6,10 @@ using SharpAIKit.Memory;
 using SharpAIKit.Observability;
 using ToolDefinition = SharpAIKit.Agent.ToolDefinition;
 
-Console.WriteLine("🧪 SharpAIKit New Features Test (v0.3.0)\n");
+Console.WriteLine("🧪 SharpAIKit New Features Test (v0.4.0)\n");
 Console.WriteLine("=".PadRight(60, '='));
 
-var apiKey = "sk-e164311ef7914e46a5d760c505714b94";
+var apiKey = "YOUR-API-KEY";
 var client = LLMClientFactory.CreateDeepSeek(apiKey);
 
 // ============================================================

@@ -34,7 +34,7 @@ using SharpAIKit.LLM;
 
 // Create a client for any OpenAI-compatible API
 var client = LLMClientFactory.Create(
-    apiKey: "your-api-key",
+    apiKey: "YOUR-API-KEY",
     baseUrl: "https://api.deepseek.com/v1",
     model: "deepseek-chat"
 );

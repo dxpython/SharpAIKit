@@ -12,7 +12,7 @@
 using SharpAIKit.Agent;
 using SharpAIKit.LLM;
 
-var client = LLMClientFactory.CreateDeepSeek("your-api-key");
+var client = LLMClientFactory.CreateDeepSeek("YOUR-API-KEY");
 var agent = new AiAgent(client);
 
 // Add tools as before
@@ -37,7 +37,7 @@ skillResolver.RegisterSkill(new SecurityPolicySkill());
 skillResolver.RegisterSkill(new CodeReviewSkill());
 
 // Create agent with Skill resolver
-var client = LLMClientFactory.CreateDeepSeek("your-api-key");
+var client = LLMClientFactory.CreateDeepSeek("YOUR-API-KEY");
 var agent = new AiAgent(client, skillResolver: skillResolver);
 
 // Add tools

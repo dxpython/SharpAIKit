@@ -5,7 +5,7 @@
 
 set -e  # Exit on error
 
-API_KEY="sk-e164311ef7914e46a5d760c505714b94"
+API_KEY="YOUR-API-KEY"
 SAMPLES_DIR="samples"
 PROJECT_ROOT="/Users/huidongdezhizhen/Desktop/SharpAIKit"
 

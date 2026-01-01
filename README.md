@@ -44,7 +44,7 @@ Package download: https://www.nuget.org/packages/SharpAIKit/
 using SharpAIKit.LLM;
 
 // Works with ANY OpenAI-compatible API
-var client = LLMClientFactory.Create("api-key", "https://api.deepseek.com/v1", "deepseek-chat");
+var client = LLMClientFactory.Create("YOUR-API-KEY", "https://api.deepseek.com/v1", "deepseek-chat");
 
 // Chat
 var response = await client.ChatAsync("Hello!");
@@ -76,7 +76,7 @@ pip install sharpaikit
 from sharpaikit import Agent
 
 agent = Agent(
-    api_key="your-api-key",
+    api_key="YOUR-API-KEY",
     model="gpt-4",
     auto_start_host=True
 )

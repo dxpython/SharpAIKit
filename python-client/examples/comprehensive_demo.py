@@ -40,7 +40,7 @@ def demo_basic_agent():
     print_section("Demo 1: Basic Agent Execution")
     
     # Configuration
-    API_KEY = "YOUR_API_KEY"
+    API_KEY = "YOUR-API-KEY"
     BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     MODEL = "qwen-plus"
     
@@ -81,7 +81,7 @@ def demo_skill_system():
     """Demo 2: Skill system integration"""
     print_section("Demo 2: Skill System Integration")
     
-    API_KEY = "sk-502f0625194247d4adc2a9c7659c0ffe"
+    API_KEY = "YOUR-API-KEY"
     BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     MODEL = "qwen-plus"
     
@@ -141,7 +141,7 @@ def demo_streaming():
     """Demo 3: Streaming execution"""
     print_section("Demo 3: Streaming Execution")
     
-    API_KEY = "sk-502f0625194247d4adc2a9c7659c0ffe"
+    API_KEY = "YOUR-API-KEY"
     BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     MODEL = "qwen-plus"
     
@@ -186,7 +186,7 @@ def demo_context_passing():
     """Demo 4: Context passing"""
     print_section("Demo 4: Context Passing")
     
-    API_KEY = "sk-502f0625194247d4adc2a9c7659c0ffe"
+    API_KEY = "YOUR-API-KEY"
     BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     MODEL = "qwen-plus"
     
@@ -229,7 +229,7 @@ def demo_error_handling():
     """Demo 5: Error handling"""
     print_section("Demo 5: Error Handling")
     
-    API_KEY = "sk-502f0625194247d4adc2a9c7659c0ffe"
+    API_KEY = "YOUR-API-KEY"
     BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     MODEL = "qwen-plus"
     
@@ -277,7 +277,7 @@ def demo_skill_resolution():
     """Demo 6: Skill resolution details"""
     print_section("Demo 6: Skill Resolution Details")
     
-    API_KEY = "sk-502f0625194247d4adc2a9c7659c0ffe"
+    API_KEY = "YOUR-API-KEY"
     BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     MODEL = "qwen-plus"
     

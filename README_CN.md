@@ -140,7 +140,7 @@ from sharpaikit import Agent
 
 # 创建 Agent（自动启动 gRPC 主机）
 agent = Agent(
-    api_key="your-api-key",
+    api_key="YOUR-API-KEY",
     model="gpt-4",
     base_url="https://api.openai.com/v1",
     auto_start_host=True
@@ -152,7 +152,7 @@ print(result.output)
 
 # 使用 Skills
 agent = Agent(
-    api_key="your-api-key",
+    api_key="YOUR-API-KEY",
     model="gpt-4",
     skills=["code-review", "security-policy"],
     auto_start_host=True
@@ -178,7 +178,7 @@ agent.close()
 using SharpAIKit.LLM;
 
 // 三行代码，支持任意 OpenAI 兼容 API
-var client = LLMClientFactory.Create("your-api-key", "https://api.deepseek.com/v1", "deepseek-chat");
+var client = LLMClientFactory.Create("YOUR-API-KEY", "https://api.deepseek.com/v1", "deepseek-chat");
 var response = await client.ChatAsync("你好！");
 Console.WriteLine(response);
 
@@ -493,7 +493,7 @@ skillResolver.RegisterSkill(new SecurityPolicySkill());
 skillResolver.RegisterSkill(new CodeReviewSkill());
 
 // 3. 创建 Agent 并注入 Skill Resolver
-var client = LLMClientFactory.CreateDeepSeek("your-api-key");
+var client = LLMClientFactory.CreateDeepSeek("YOUR-API-KEY");
 var agent = new EnhancedAgent(
     llmClient,
     skillResolver: skillResolver // 注入 Skill Resolver
