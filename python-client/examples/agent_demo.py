@@ -38,7 +38,7 @@ def main():
         print("   Using default Qwen API key for testing")
     
     # Use Qwen configuration if using Qwen API key
-    if api_key == "sk-502f0625194247d4adc2a9c7659c0ffe" or os.getenv("QWEN_API_KEY"):
+    if api_key == "YOUR-API-KEY" or os.getenv("QWEN_API_KEY"):
         base_url = os.getenv("LLM_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
         model = os.getenv("LLM_MODEL", "qwen-turbo")
     else:
