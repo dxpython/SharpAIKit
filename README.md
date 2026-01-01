@@ -246,7 +246,7 @@ See [中文文档](README_CN.md) or [English Documentation](README_EN.md) for de
 
 ## 🏗️ Architecture Improvements
 
-SharpAIKit v0.1.0 introduces comprehensive architecture improvements:
+SharpAIKit v0.4.1 introduces comprehensive architecture improvements:
 
 - **StrongContext**: Type-safe data passing with compile-time checking
 - **Modular Architecture**: IPlanner, IToolExecutor, IMemory interfaces
