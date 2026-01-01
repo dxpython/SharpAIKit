@@ -1,0 +1,11 @@
+# PyPI Configuration Example
+# Copy this file to ~/.pypirc and fill in your API token
+
+[pypi]
+username = __token__
+password = pypi-your-api-token-here
+
+[testpypi]
+username = __token__
+password = pypi-your-test-api-token-here
+

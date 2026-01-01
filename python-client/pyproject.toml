@@ -1,0 +1,97 @@
+[project]
+name = "sharpaikit"
+version = "0.3.0"
+description = "Official Python SDK for SharpAIKit - .NET AI/LLM Toolkit with Agent, Chain, Memory, RAG, Graph, and more"
+readme = "README_PYPI.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "SharpAIKit Team", email = "info@sharpaikit.dev"}
+]
+maintainers = [
+    {name = "Dustin Dong"},
+    {name = "Evelyn-Liux"}
+]
+keywords = ["ai", "llm", "agent", "sharpai", "grpc", "langchain", "openai", "chatgpt", "machine-learning"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "grpcio>=1.60.0",
+    "grpcio-tools>=1.60.0",
+    "httpx>=0.24.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/dxpython/SharpAIKit"
+Documentation = "https://github.com/dxpython/SharpAIKit"
+Repository = "https://github.com/dxpython/SharpAIKit"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatchling.build]
+include = [
+    "sharpaikit/**/*.py",
+    "sharpaikit/_grpc/*.py",
+    "LICENSE",
+    "README_PYPI.md",
+]
+exclude = [
+    "**/__pycache__",
+    "**/*.pyc",
+    "examples",
+    "tests",
+    "*.egg-info",
+    "dist",
+    "build",
+    "*.md",
+    "*.sh",
+    "*.toml",
+    "*.lock",
+    "Makefile",
+    "setup.py",
+    "generate_grpc.py",
+    "build.sh",
+    "publish_to_pypi.sh",
+]
+
+[tool.uv]
+dev-dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py38']
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+

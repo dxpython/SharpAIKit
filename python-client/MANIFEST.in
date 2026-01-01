@@ -1,0 +1,23 @@
+include README_PYPI.md
+include LICENSE
+recursive-include sharpaikit *.py
+recursive-include sharpaikit/_grpc *.py
+global-exclude __pycache__
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude .DS_Store
+global-exclude *.egg-info
+global-exclude dist
+global-exclude build
+global-exclude examples
+global-exclude tests
+global-exclude *.md
+global-exclude *.sh
+global-exclude *.toml
+global-exclude *.lock
+global-exclude Makefile
+global-exclude setup.py
+global-exclude generate_grpc.py
+global-exclude build.sh
+global-exclude publish_to_pypi.sh
+
