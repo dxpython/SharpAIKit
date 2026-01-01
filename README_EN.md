@@ -62,6 +62,7 @@
 - [Observability (Callback)](#-observability-callback)
 - [MultiModal](#-multimodal)
 - [Advanced Agents](#-advanced-agents)
+- [🎯 Agent Skills Mechanism](#-agent-skills-mechanism--enterprise-governance-feature) ⭐ **Enterprise Governance Feature**
 - [RAG Engine](#-rag-engine)
 - [🔮 Native C# Code Interpreter](#-native-c-code-interpreter) ⭐ **Killer Feature**
 - [🕸️ SharpGraph](#️-sharpgraph) ⭐ **Killer Feature**
@@ -83,6 +84,7 @@
 | 📊 **Callback** | Observability | Console, Logging, Metrics, File full-trace |
 | 🖼️ **MultiModal** | MultiModal | Image URL, local files, Base64 support |
 | 🤖 **Agent** | Intelligent Agents | ReAct, Plan-Execute, Multi-Agent systems |
+| 🎯 **Skills** | Behavior Governance | **Enterprise behavior constraint mechanism**, discoverable, activatable, auditable ⭐ NEW |
 | 📚 **RAG** | Retrieval-Augmented | Document indexing, vector search, Q&A |
 | 🔮 **Code Interpreter** | Code Execution | **Native C# code execution**, no Python, based on Roslyn |
 | 🕸️ **SharpGraph** | Graph Orchestration | **Finite State Machine**, supports loops and complex branches |
@@ -98,14 +100,75 @@
 | 📝 **Structured Logging** | Logging | **Structured attributes**, easy debugging |
 | 🎨 **Fluent API** | Chain Building | **Elegant API**, better DX |
 | 📦 **Pre-built Templates** | Out-of-box | **ReAct/MapReduce/Reflection** patterns |
+| 🐍 **Python SDK** | Python Client | **Official Python SDK**, calls C# services via gRPC ⭐ NEW |
 
 ---
 
 ## 📦 Installation
 
+### .NET Package (NuGet)
+
 ```bash
 dotnet add package SharpAIKit
 ```
+
+### Python SDK (PyPI) ⭐ **New**
+
+SharpAIKit now provides an official Python SDK that calls C# services via gRPC.
+
+```bash
+pip install sharpaikit
+```
+
+Or using `uv`:
+
+```bash
+uv pip install sharpaikit
+```
+
+**Python SDK Features**:
+- ✅ Agent execution (sync/async/streaming)
+- ✅ Full Skill system support
+- ✅ Tool execution
+- ✅ Context passing
+- ✅ Automatic process management (auto start/stop gRPC host)
+
+**Quick Start**:
+
+```python
+from sharpaikit import Agent
+
+# Create agent (automatically starts gRPC host)
+agent = Agent(
+    api_key="your-api-key",
+    model="gpt-4",
+    base_url="https://api.openai.com/v1",
+    auto_start_host=True
+)
+
+# Execute task
+result = agent.run("Hello, world!")
+print(result.output)
+
+# Use Skills
+agent = Agent(
+    api_key="your-api-key",
+    model="gpt-4",
+    skills=["code-review", "security-policy"],
+    auto_start_host=True
+)
+
+result = agent.run("Review this code for security issues")
+if result.skill_resolution:
+    print(f"Activated Skills: {result.skill_resolution.activated_skill_ids}")
+
+# Cleanup
+agent.close()
+```
+
+**More Information**:
+- PyPI Package: https://pypi.org/project/sharpaikit/
+- Python SDK Documentation: `python-client/README.md`
 
 ---
 
@@ -395,6 +458,251 @@ var multiAgent = new MultiAgentSystem(client)
 var teamResult = await multiAgent.RunAsync("Write a technical blog about AI");
 // Output includes: Task delegation + agent responses + synthesized answer
 ```
+
+---
+
+## 🎯 Agent Skills Mechanism ⭐ **Enterprise Governance Feature**
+
+**🎯 Core Value: Decouple Agent behavior specifications from Prompts, providing discoverable, activatable, and constrainable behavior modules for enterprise/platform-level Agent governance scenarios.**
+
+### Why Skills?
+
+- **Pain Point**: Traditional approaches hardcode behavior specifications in Prompts, making them hard to manage, reuse, and audit
+- **Advantage**: Skills are independent behavior constraint modules that can be dynamically activated, combined, and audited
+- **Effect**: Enterprises can centrally manage security policies, compliance rules, code review standards, etc., without modifying Agent core code
+
+### Core Concepts
+
+**Skills are behavior constraints, not execution entities**:
+- Skills do not directly execute tasks, only influence "how" and "what" the Agent is allowed to execute
+- Skills restrict tool usage, execution steps, execution time, etc. through constraints
+- Skills can inject context information to influence Agent decision-making
+
+### Basic Usage
+
+```csharp
+using SharpAIKit.Agent;
+using SharpAIKit.Skill;
+using SharpAIKit.Skill.Examples;
+
+// 1. Create Skill Resolver
+var skillResolver = new DefaultSkillResolver();
+
+// 2. Register Skills
+skillResolver.RegisterSkill(new SecurityPolicySkill());
+skillResolver.RegisterSkill(new CodeReviewSkill());
+
+// 3. Create Agent and inject Skill Resolver
+var client = LLMClientFactory.CreateDeepSeek("your-api-key");
+var agent = new EnhancedAgent(
+    llmClient,
+    skillResolver: skillResolver // Inject Skill Resolver
+);
+
+// 4. Run task (Skills automatically activate and apply)
+var result = await agent.RunAsync("Review this code for security issues");
+
+// 5. View Skill resolution result
+if (agent.LastSkillResolution != null)
+{
+    Console.WriteLine($"Activated Skills: {string.Join(", ", agent.LastSkillResolution.ActivatedSkillIds)}");
+    Console.WriteLine($"Decision Reasons:\n{string.Join("\n", agent.LastSkillResolution.DecisionReasons)}");
+}
+```
+
+### Skill Constraint Types
+
+```csharp
+public class SkillConstraints
+{
+    // 1. Tool whitelist (only allow specified tools)
+    public IReadOnlySet<string>? AllowedTools { get; init; }
+    
+    // 2. Tool blacklist (forbid specified tools)
+    public IReadOnlySet<string> ForbiddenTools { get; init; }
+    
+    // 3. Maximum execution steps
+    public int? MaxSteps { get; init; }
+    
+    // 4. Maximum execution time
+    public TimeSpan? MaxExecutionTime { get; init; }
+    
+    // 5. Context modifications (injected into Agent context)
+    public IReadOnlyDictionary<string, object?> ContextModifications { get; init; }
+    
+    // 6. Custom validator (validated before tool execution)
+    public Func<string, Dictionary<string, object?>, StrongContext, bool>? CustomValidator { get; init; }
+}
+```
+
+### Constraint Merging Rules (Deterministic Algorithm)
+
+Constraints from multiple Skills are merged according to the following rules:
+
+| Constraint Type | Merging Strategy | Description |
+|:---------------|:----------------|:------------|
+| **AllowedTools** | **Intersection** | Multiple Skills' whitelists are intersected, most restrictive limit applies |
+| **ForbiddenTools** | **Union** | Multiple Skills' blacklists are unioned, any deny means deny |
+| **MaxSteps** | **Minimum** | Take the minimum value from all Skill restrictions |
+| **MaxExecutionTime** | **Minimum** | Take the minimum value from all Skill restrictions |
+| **ContextModifications** | **High Priority Override** | High priority Skills' context modifications override low priority |
+| **CustomValidator** | **AND Logic** | All validators must pass |
+
+**Conflict Resolution**: `ForbiddenTools` always override `AllowedTools` (Deny-overrides-Allow), ensuring security takes precedence.
+
+### Example: Code Review Skill
+
+```csharp
+public class CodeReviewSkill : ISkill
+{
+    public SkillMetadata Metadata => new()
+    {
+        Id = "code_review",
+        Name = "Code Review Skill",
+        Description = "Enforces code review best practices",
+        Version = "1.0.0",
+        Scope = "code_review",
+        Priority = 10
+    };
+    
+    public bool ShouldActivate(string task, StrongContext context)
+    {
+        var keywords = new[] { "review", "code review", "analyze code", "inspect" };
+        return keywords.Any(k => task.ToLowerInvariant().Contains(k));
+    }
+    
+    public SkillConstraints GetConstraints(StrongContext context)
+    {
+        return new SkillConstraints
+        {
+            // Only allow code analysis tools
+            AllowedTools = new HashSet<string>
+            {
+                "code_analyzer",
+                "syntax_checker",
+                "linter",
+                "security_scanner"
+            },
+            // Forbid file writing tools
+            ForbiddenTools = new HashSet<string> { "file_writer", "code_modifier" },
+            // Limit maximum steps
+            MaxSteps = 5,
+            // Inject code review context
+            ContextModifications = new Dictionary<string, object?>
+            {
+                ["review_mode"] = true,
+                ["focus_areas"] = new[] { "security", "performance", "maintainability" }
+            }
+        };
+    }
+    
+    public string? ApplyToPlanning(string planningPrompt, StrongContext context)
+    {
+        return planningPrompt + "\n\nNote: This is a code review task. Focus on analysis, not modification.";
+    }
+}
+```
+
+### Example: Security Policy Skill
+
+```csharp
+public class SecurityPolicySkill : ISkill
+{
+    public SkillMetadata Metadata => new()
+    {
+        Id = "security_policy",
+        Name = "Security Policy Skill",
+        Description = "Enforces security policies",
+        Version = "1.0.0",
+        Scope = "security",
+        Priority = 100 // High priority
+    };
+    
+    public bool ShouldActivate(string task, StrongContext context)
+    {
+        // Security policy always activates (or based on user role)
+        var userRole = context.Get<string>("user_role");
+        return userRole != "admin";
+    }
+    
+    public SkillConstraints GetConstraints(StrongContext context)
+    {
+        return new SkillConstraints
+        {
+            // Forbid high-risk tools
+            ForbiddenTools = new HashSet<string>
+            {
+                "file_deleter",
+                "system_command",
+                "database_writer",
+                "network_request"
+            },
+            MaxExecutionTime = TimeSpan.FromMinutes(5),
+            // Custom validator: check if tool arguments contain sensitive information
+            CustomValidator = (toolName, args, ctx) =>
+            {
+                var sensitivePatterns = new[] { "password", "token", "secret", "key" };
+                var argsStr = string.Join(" ", args.Values.Select(v => v?.ToString() ?? ""));
+                return !sensitivePatterns.Any(p => argsStr.Contains(p, StringComparison.OrdinalIgnoreCase));
+            }
+        };
+    }
+}
+```
+
+### Observability & Auditability
+
+The Skills system provides complete observability and auditability:
+
+```csharp
+var result = await agent.RunAsync("Review code");
+var skillResolution = agent.LastSkillResolution;
+
+if (skillResolution != null)
+{
+    // View activated Skills
+    Console.WriteLine($"Activated Skills: {string.Join(", ", skillResolution.ActivatedSkillIds)}");
+    
+    // View decision reasons (complete audit trail)
+    foreach (var reason in skillResolution.DecisionReasons)
+    {
+        Console.WriteLine($"  - {reason}");
+    }
+    
+    // View final constraints
+    var constraints = skillResolution.FinalConstraints;
+    Console.WriteLine($"Allowed Tools: {constraints.AllowedTools?.Count ?? 0} (null=no restriction)");
+    Console.WriteLine($"Forbidden Tools: {constraints.ForbiddenTools.Count}");
+    Console.WriteLine($"Max Steps: {constraints.MaxSteps?.ToString() ?? "unlimited"}");
+}
+```
+
+**Decision Reason Example**:
+```
+Skill 'code_review' (Code Review Skill) activated: task matches activation conditions
+Skill 'code_review' sets allowed tools: code_analyzer, syntax_checker, linter
+Skill 'security_policy' adds forbidden tools: file_deleter, system_command
+Conflict resolution: Deny-overrides-Allow. Tools file_writer are in both allowed and forbidden lists, they will be forbidden.
+Final constraints: AllowedTools=3, ForbiddenTools=2, MaxSteps=5, MaxExecutionTime=00:05:00
+```
+
+### Architectural Advantages
+
+- ✅ **Decoupling**: Skills are completely decoupled from Agent Core, Agents can run without Skills
+- ✅ **Extensibility**: Adding new Skills only requires implementing `ISkill` interface, no Core modifications needed
+- ✅ **Type Safety**: All constraints and metadata are strongly typed, compile-time checked
+- ✅ **Backward Compatible**: Existing code runs without modification, Skills system is optional
+- ✅ **Enterprise Governance**: Provides complete audit trails and observability
+
+### Use Cases
+
+- **Security Policies**: Restrict high-risk tool usage, prevent data leaks
+- **Compliance Requirements**: Enforce GDPR, HIPAA, and other compliance rules
+- **Code Review**: Restrict to code analysis tools only, forbid code modification
+- **Organizational Standards**: Inject organization-specific context and style guides
+- **Resource Limits**: Limit execution steps and time, prevent resource abuse
+
+---
 
 ---
 

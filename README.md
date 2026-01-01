@@ -16,6 +16,8 @@
 - 🔮 **Native C# Code Interpreter** - Execute C# code directly, no Python needed
 - 🕸️ **SharpGraph** - Graph orchestration with loops and complex branches
 - 🧬 **DSPy Optimizer** - Auto-optimize prompts, gets smarter over time
+- 🎯 **Agent Skills Mechanism** - Enterprise behavior governance, discoverable, activatable, auditable ⭐ NEW
+- 🐍 **Python SDK** - Official Python SDK via PyPI, calls C# services via gRPC ⭐ NEW
 - 🏗️ **Architecture Improvements** - StrongContext, Modular Architecture, Middleware System, State Persistence, Parallel Execution, Event System, OpenAPI Tools, OpenTelemetry, Structured Logging, Fluent API, Pre-built Templates
 
 Package download: https://www.nuget.org/packages/SharpAIKit/
@@ -56,9 +58,35 @@ await foreach (var chunk in client.ChatStreamAsync("Tell me a story"))
 
 ## 📦 Installation
 
+### .NET Package (NuGet)
+
 ```bash
 dotnet add package SharpAIKit
 ```
+
+### Python SDK (PyPI) ⭐ **New**
+
+```bash
+pip install sharpaikit
+```
+
+**Quick Start**:
+
+```python
+from sharpaikit import Agent
+
+agent = Agent(
+    api_key="your-api-key",
+    model="gpt-4",
+    auto_start_host=True
+)
+
+result = agent.run("Hello, world!")
+print(result.output)
+agent.close()
+```
+
+**PyPI**: https://pypi.org/project/sharpaikit/
 
 ## 🌐 Supported Providers
 
@@ -180,6 +208,38 @@ var result = await optimizer.OptimizeAsync(initialPrompt);
 Console.WriteLine($"Optimized: {result.OptimizedPrompt}");
 Console.WriteLine($"Best score: {result.BestScore:F2}");
 // The optimizer automatically adds few-shot examples and improves the prompt!
+```
+
+### 🎯 Agent Skills Mechanism ⭐ **Enterprise Governance**
+
+**Enterprise behavior governance system** - Decouple behavior specifications from Prompts, providing discoverable, activatable, and constrainable behavior modules.
+
+**Key Features**:
+- ✅ Tool whitelist/blacklist constraints
+- ✅ Execution step and time limits
+- ✅ Context injection
+- ✅ Custom validators
+- ✅ Deterministic constraint merging
+- ✅ Complete audit trails
+
+**Quick Example**:
+
+```csharp
+using SharpAIKit.Skill;
+using SharpAIKit.Skill.Examples;
+
+var skillResolver = new DefaultSkillResolver();
+skillResolver.RegisterSkill(new SecurityPolicySkill());
+skillResolver.RegisterSkill(new CodeReviewSkill());
+
+var agent = new EnhancedAgent(llmClient, skillResolver: skillResolver);
+var result = await agent.RunAsync("Review code for security issues");
+
+// View Skill resolution
+if (agent.LastSkillResolution != null)
+{
+    Console.WriteLine($"Activated Skills: {string.Join(", ", agent.LastSkillResolution.ActivatedSkillIds)}");
+}
 ```
 
 See [中文文档](README_CN.md) or [English Documentation](README_EN.md) for detailed examples.

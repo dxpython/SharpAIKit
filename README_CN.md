@@ -62,6 +62,7 @@
 - [可观测性 (Callback)](#-可观测性-callback)
 - [多模态 (MultiModal)](#-多模态-multimodal)
 - [高级 Agent](#-高级-agent)
+- [🎯 Agent Skills 机制](#-agent-skills-机制--企业级治理功能) ⭐ **企业级治理功能**
 - [RAG 引擎](#-rag-引擎)
 - [🔮 Native C# Code Interpreter](#-native-c-code-interpreter) ⭐ **杀手级功能**
 - [🕸️ SharpGraph 图编排](#️-sharpgraph-图编排) ⭐ **杀手级功能**
@@ -83,6 +84,7 @@
 | 📊 **Callback** | 可观测性 | Console、Logging、Metrics、File 全链路追踪 |
 | 🖼️ **MultiModal** | 多模态 | 图像URL、本地文件、Base64 支持 |
 | 🤖 **Agent** | 智能代理 | ReAct、Plan-Execute、Multi-Agent 系统 |
+| 🎯 **Skills** | 行为治理 | **企业级行为约束机制**，可发现、可激活、可审计 ⭐ NEW |
 | 📚 **RAG** | 检索增强 | 文档索引、向量搜索、智能问答 |
 | 🔮 **Code Interpreter** | 代码解释器 | **原生 C# 代码执行**，无需 Python，基于 Roslyn |
 | 🕸️ **SharpGraph** | 图编排 | **有限状态机**，支持循环和复杂分支 |
@@ -98,14 +100,75 @@
 | 📝 **结构化日志** | 日志记录 | **结构化属性**，便于调试 |
 | 🎨 **Fluent API** | 链式构建 | **优雅的 API**，提升开发体验 |
 | 📦 **预置模版** | 开箱即用 | **ReAct/MapReduce/Reflection** 模式 |
+| 🐍 **Python SDK** | Python 客户端 | **官方 Python SDK**，通过 gRPC 调用 C# 服务 ⭐ NEW |
 
 ---
 
 ## 📦 安装
 
+### .NET 包（NuGet）
+
 ```bash
 dotnet add package SharpAIKit
 ```
+
+### Python SDK（PyPI）⭐ **新增**
+
+SharpAIKit 现已提供官方 Python SDK，通过 gRPC 调用 C# 端的服务。
+
+```bash
+pip install sharpaikit
+```
+
+或使用 `uv`：
+
+```bash
+uv pip install sharpaikit
+```
+
+**Python SDK 功能**：
+- ✅ Agent 执行（同步/异步/流式）
+- ✅ Skill 系统完整支持
+- ✅ 工具执行
+- ✅ 上下文传递
+- ✅ 自动进程管理（自动启动/关闭 gRPC 主机）
+
+**快速开始**：
+
+```python
+from sharpaikit import Agent
+
+# 创建 Agent（自动启动 gRPC 主机）
+agent = Agent(
+    api_key="your-api-key",
+    model="gpt-4",
+    base_url="https://api.openai.com/v1",
+    auto_start_host=True
+)
+
+# 执行任务
+result = agent.run("Hello, world!")
+print(result.output)
+
+# 使用 Skills
+agent = Agent(
+    api_key="your-api-key",
+    model="gpt-4",
+    skills=["code-review", "security-policy"],
+    auto_start_host=True
+)
+
+result = agent.run("Review this code for security issues")
+if result.skill_resolution:
+    print(f"激活的 Skills: {result.skill_resolution.activated_skill_ids}")
+
+# 清理资源
+agent.close()
+```
+
+**更多信息**：
+- PyPI 包：https://pypi.org/project/sharpaikit/
+- Python SDK 文档：`python-client/README.md`
 
 ---
 
@@ -395,6 +458,251 @@ var multiAgent = new MultiAgentSystem(client)
 var teamResult = await multiAgent.RunAsync("撰写一篇关于AI的技术博客");
 // 输出包含: 任务分配 + 各Agent响应 + 综合答案
 ```
+
+---
+
+## 🎯 Agent Skills 机制 ⭐ **企业级治理功能**
+
+**🎯 核心价值：将 Agent 行为规范从 Prompt 中解耦，提供可发现、可激活、可约束的行为模块，面向企业级/平台级 Agent 治理场景。**
+
+### 为什么需要 Skills？
+
+- **痛点**：传统方式将行为规范硬编码在 Prompt 中，难以管理、复用和审计
+- **优势**：Skills 是独立的行为约束模块，可以动态激活、组合和审计
+- **效果**：企业可以统一管理安全策略、合规规则、代码审查标准等，无需修改 Agent 核心代码
+
+### 核心概念
+
+**Skills 是行为约束，不是执行主体**：
+- Skills 不直接执行任务，只影响 Agent 的"如何执行"和"允许执行什么"
+- Skills 通过约束（Constraints）限制工具使用、执行步骤、执行时间等
+- Skills 可以注入上下文信息，影响 Agent 的决策过程
+
+### 基础使用
+
+```csharp
+using SharpAIKit.Agent;
+using SharpAIKit.Skill;
+using SharpAIKit.Skill.Examples;
+
+// 1. 创建 Skill Resolver
+var skillResolver = new DefaultSkillResolver();
+
+// 2. 注册 Skill
+skillResolver.RegisterSkill(new SecurityPolicySkill());
+skillResolver.RegisterSkill(new CodeReviewSkill());
+
+// 3. 创建 Agent 并注入 Skill Resolver
+var client = LLMClientFactory.CreateDeepSeek("your-api-key");
+var agent = new EnhancedAgent(
+    llmClient,
+    skillResolver: skillResolver // 注入 Skill Resolver
+);
+
+// 4. 运行任务（Skill 自动激活和应用）
+var result = await agent.RunAsync("Review this code for security issues");
+
+// 5. 查看 Skill 解析结果
+if (agent.LastSkillResolution != null)
+{
+    Console.WriteLine($"激活的 Skills: {string.Join(", ", agent.LastSkillResolution.ActivatedSkillIds)}");
+    Console.WriteLine($"决策原因:\n{string.Join("\n", agent.LastSkillResolution.DecisionReasons)}");
+}
+```
+
+### Skill 约束类型
+
+```csharp
+public class SkillConstraints
+{
+    // 1. 工具白名单（只允许使用指定的工具）
+    public IReadOnlySet<string>? AllowedTools { get; init; }
+    
+    // 2. 工具黑名单（禁止使用指定的工具）
+    public IReadOnlySet<string> ForbiddenTools { get; init; }
+    
+    // 3. 最大执行步骤数
+    public int? MaxSteps { get; init; }
+    
+    // 4. 最大执行时间
+    public TimeSpan? MaxExecutionTime { get; init; }
+    
+    // 5. 上下文修改（注入到 Agent 上下文）
+    public IReadOnlyDictionary<string, object?> ContextModifications { get; init; }
+    
+    // 6. 自定义验证器（在工具执行前验证）
+    public Func<string, Dictionary<string, object?>, StrongContext, bool>? CustomValidator { get; init; }
+}
+```
+
+### 约束合并规则（确定性算法）
+
+多个 Skill 的约束会按照以下规则合并：
+
+| 约束类型 | 合并策略 | 说明 |
+|:--------|:--------|:-----|
+| **AllowedTools** | **交集**（Intersection） | 多个 Skill 的白名单取交集，最严格的限制生效 |
+| **ForbiddenTools** | **并集**（Union） | 多个 Skill 的黑名单取并集，任一禁止即禁止 |
+| **MaxSteps** | **最小值**（Minimum） | 取所有 Skill 限制的最小值 |
+| **MaxExecutionTime** | **最小值**（Minimum） | 取所有 Skill 限制的最小值 |
+| **ContextModifications** | **高优先级覆盖** | 高优先级 Skill 的上下文修改覆盖低优先级 |
+| **CustomValidator** | **AND 逻辑** | 所有验证器必须通过 |
+
+**冲突解决**：`ForbiddenTools` 始终覆盖 `AllowedTools`（Deny-overrides-Allow），确保安全性优先。
+
+### 示例：代码审查 Skill
+
+```csharp
+public class CodeReviewSkill : ISkill
+{
+    public SkillMetadata Metadata => new()
+    {
+        Id = "code_review",
+        Name = "Code Review Skill",
+        Description = "Enforces code review best practices",
+        Version = "1.0.0",
+        Scope = "code_review",
+        Priority = 10
+    };
+    
+    public bool ShouldActivate(string task, StrongContext context)
+    {
+        var keywords = new[] { "review", "code review", "analyze code", "inspect" };
+        return keywords.Any(k => task.ToLowerInvariant().Contains(k));
+    }
+    
+    public SkillConstraints GetConstraints(StrongContext context)
+    {
+        return new SkillConstraints
+        {
+            // 只允许代码分析工具
+            AllowedTools = new HashSet<string>
+            {
+                "code_analyzer",
+                "syntax_checker",
+                "linter",
+                "security_scanner"
+            },
+            // 禁止文件写入工具
+            ForbiddenTools = new HashSet<string> { "file_writer", "code_modifier" },
+            // 限制最大步骤数
+            MaxSteps = 5,
+            // 注入代码审查上下文
+            ContextModifications = new Dictionary<string, object?>
+            {
+                ["review_mode"] = true,
+                ["focus_areas"] = new[] { "security", "performance", "maintainability" }
+            }
+        };
+    }
+    
+    public string? ApplyToPlanning(string planningPrompt, StrongContext context)
+    {
+        return planningPrompt + "\n\nNote: This is a code review task. Focus on analysis, not modification.";
+    }
+}
+```
+
+### 示例：安全策略 Skill
+
+```csharp
+public class SecurityPolicySkill : ISkill
+{
+    public SkillMetadata Metadata => new()
+    {
+        Id = "security_policy",
+        Name = "Security Policy Skill",
+        Description = "Enforces security policies",
+        Version = "1.0.0",
+        Scope = "security",
+        Priority = 100 // 高优先级
+    };
+    
+    public bool ShouldActivate(string task, StrongContext context)
+    {
+        // 安全策略始终激活（或基于用户角色）
+        var userRole = context.Get<string>("user_role");
+        return userRole != "admin";
+    }
+    
+    public SkillConstraints GetConstraints(StrongContext context)
+    {
+        return new SkillConstraints
+        {
+            // 禁止高风险工具
+            ForbiddenTools = new HashSet<string>
+            {
+                "file_deleter",
+                "system_command",
+                "database_writer",
+                "network_request"
+            },
+            MaxExecutionTime = TimeSpan.FromMinutes(5),
+            // 自定义验证器：检查工具参数是否包含敏感信息
+            CustomValidator = (toolName, args, ctx) =>
+            {
+                var sensitivePatterns = new[] { "password", "token", "secret", "key" };
+                var argsStr = string.Join(" ", args.Values.Select(v => v?.ToString() ?? ""));
+                return !sensitivePatterns.Any(p => argsStr.Contains(p, StringComparison.OrdinalIgnoreCase));
+            }
+        };
+    }
+}
+```
+
+### 可观测性与审计
+
+Skills 系统提供完整的可观测性和审计能力：
+
+```csharp
+var result = await agent.RunAsync("Review code");
+var skillResolution = agent.LastSkillResolution;
+
+if (skillResolution != null)
+{
+    // 查看激活的 Skills
+    Console.WriteLine($"激活的 Skills: {string.Join(", ", skillResolution.ActivatedSkillIds)}");
+    
+    // 查看决策原因（完整的审计轨迹）
+    foreach (var reason in skillResolution.DecisionReasons)
+    {
+        Console.WriteLine($"  - {reason}");
+    }
+    
+    // 查看最终约束
+    var constraints = skillResolution.FinalConstraints;
+    Console.WriteLine($"允许的工具: {constraints.AllowedTools?.Count ?? 0} (null=无限制)");
+    Console.WriteLine($"禁止的工具: {constraints.ForbiddenTools.Count}");
+    Console.WriteLine($"最大步骤数: {constraints.MaxSteps?.ToString() ?? "无限制"}");
+}
+```
+
+**决策原因示例**：
+```
+Skill 'code_review' (Code Review Skill) activated: task matches activation conditions
+Skill 'code_review' sets allowed tools: code_analyzer, syntax_checker, linter
+Skill 'security_policy' adds forbidden tools: file_deleter, system_command
+Conflict resolution: Deny-overrides-Allow. Tools file_writer are in both allowed and forbidden lists, they will be forbidden.
+Final constraints: AllowedTools=3, ForbiddenTools=2, MaxSteps=5, MaxExecutionTime=00:05:00
+```
+
+### 架构优势
+
+- ✅ **解耦性**：Skill 与 Agent Core 完全解耦，Agent 可以无 Skill 运行
+- ✅ **可扩展性**：新增 Skill 只需实现 `ISkill` 接口，无需修改 Core
+- ✅ **类型安全**：所有约束和元数据都是强类型，编译时检查
+- ✅ **向后兼容**：现有代码无需修改即可运行，Skill 系统是可选的
+- ✅ **企业级治理**：提供完整的审计轨迹和可观测性
+
+### 使用场景
+
+- **安全策略**：限制高风险工具的使用，防止数据泄露
+- **合规要求**：强制执行 GDPR、HIPAA 等合规规则
+- **代码审查**：限制只能使用代码分析工具，禁止修改代码
+- **组织规范**：注入组织特定的上下文和风格指南
+- **资源限制**：限制执行步骤数和执行时间，防止资源滥用
+
+---
 
 ---
 
